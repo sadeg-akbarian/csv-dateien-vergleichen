@@ -11,25 +11,16 @@ export default {
   data() {
     return {
       csvContent: "",
+      theDatabases: [],
     };
   },
   methods: {
     loadTheFile(event) {
       const file = event.target.files[0];
       console.log(file);
+      const mainThis = this;
 
       if (file) {
-        console.log(file.size);
-        let theSize = file.size;
-        if (theSize < 1024) {
-          theSize = `${theSize} Bytes`;
-        } else if (theSize < 1024 * 1024) {
-          theSize = `${(theSize / 1024).toFixed(2)} KB`;
-        } else {
-          theSize = `${(theSize / (1024 * 1024)).toFixed(2)} MB`;
-        }
-        console.log(theSize);
-
         const reader = new FileReader();
         reader.onload = function (e) {
           const arrayBuffer = e.target.result;
@@ -39,15 +30,23 @@ export default {
             .then((zip) => {
               zip.forEach((relativePath, file) => {
                 file.async("string").then((content) => {
-                  // Ausgabe des Dateinamens und Inhalts
-                  // console.log("Datei:", relativePath);
+                  console.log("Datei:", relativePath);
                   // console.log("Inhalt:", content);
-                  // console.log(typeof content);
-                  const theParagraph = document.querySelector("p");
-                  theParagraph.innerText = "content";
-                  const blob = new Blob([content], { type: "text/plain" });
-                  const sizeInBytes = blob.size;
-                  console.log(sizeInBytes);
+                  console.log(typeof content);
+                  if (!window.indexedDB) {
+                    alert("Sorry! Your browser does not support IndexedDB");
+                  }
+                  console.log(mainThis.theDatabases);
+                  if (mainThis.theDatabases.length === 0) {
+                    mainThis.theDatabases.push(1);
+                  } else {
+                    const previousLastNumberOfDatabases =
+                      mainThis.theDatabases[mainThis.theDatabases.length - 1];
+                    let newLastNumberOfDatabases =
+                      previousLastNumberOfDatabases + 1;
+                    mainThis.theDatabases.push(newLastNumberOfDatabases);
+                  }
+                  // TODO: Füge indexedDB hinzu
                 });
               });
             })
