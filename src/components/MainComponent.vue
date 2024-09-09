@@ -2,9 +2,11 @@
   <h1>{{ msg }}</h1>
   <input type="file" accept=".zip" @change="loadTheFile($event)" />
   <p>{{ calculateSizeInMB }}</p>
-  <table v-if="finalBase.length > 10">
-    <tr v-for="(vinyl, index) of finalBase" :key="index">
-      <template v-if="index < 10000">
+  <button type="button" @click="clearFile">Delete File 1</button>
+  <button type="button">Delete File 2</button>
+  <table v-if="firstFinalBase.length > 10">
+    <tr v-for="(vinyl, index) of firstFinalBase" :key="index">
+      <template v-if="index < 10">
         <td>{{ vinyl[0] }}</td>
         <td>{{ vinyl[1] }}</td>
         <td>{{ vinyl[2] }}</td>
@@ -30,14 +32,15 @@ export default {
     return {
       csvContent: "",
       theDatabases: [],
-      newDatabase: null,
-      finalBase: [],
+      fileInputElement: null,
+      firstNewDatabase: null,
+      firstFinalBase: [],
     };
   },
   computed: {
     calculateSizeInMB() {
       // Das JSON-Objekt in einen String umwandeln
-      const jsonString = JSON.stringify(this.finalBase);
+      const jsonString = JSON.stringify(this.firstFinalBase);
       // Die Länge des Strings berechnen
       const byteSize = new Blob([jsonString]).size;
       // Die Größe in Megabytes umwandeln
@@ -50,8 +53,7 @@ export default {
       const file = event.target.files[0];
       console.log(file);
       const mainThis = this;
-      mainThis.newDatabase = null;
-      mainThis.finalBase = [];
+      mainThis.fileInputElement = event.target;
 
       if (file) {
         const reader = new FileReader();
@@ -80,9 +82,10 @@ export default {
                     mainThis.theDatabases.push(newLastNumberOfDatabases);
                   }
                   const regex = /(?=\d{9},)/g;
-                  mainThis.newDatabase = content.split(regex);
+                  mainThis.firstNewDatabase = content.split(regex);
+                  // console.log();
 
-                  for (let platte of mainThis.newDatabase) {
+                  for (let platte of mainThis.firstNewDatabase) {
                     // Split-Kommas, die nicht innerhalb von Anführungszeichen liegen
                     const result = platte.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
 
@@ -91,39 +94,40 @@ export default {
                       const cleanedResult = result.map((item) =>
                         item.trim().replace(/^"(.*)"$/, "$1")
                       );
+
                       const shortenedCleanedResult = cleanedResult.slice(0, 13);
-                      mainThis.finalBase.push(shortenedCleanedResult);
+                      mainThis.firstFinalBase.push(shortenedCleanedResult);
                     } else {
                       console.error("No match found for:", platte);
                     }
                   }
 
-                  // TODO: Im mainThis.finalBase müssen die items in key-value-Paare umgewandelt werden, bei denen der key die ID ist
+                  // TODO: Im mainThis.firstFinalBase müssen die items in key-value-Paare umgewandelt werden, bei denen der key die ID ist
                   // TODO: und der value ein object, der die restlichen Daten der Platte enthält
 
                   // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
                   // const request = indexedDB.open("CSV-Databases", 1);
                   // request.onupgradeneeded = (event) => {
-                  //   mainThis.newDatabase = event.target.result;
+                  //   mainThis.firstNewDatabase = event.target.result;
                   //   if (
-                  //     !mainThis.newDatabase.objectStoreNames.contains("myStore")
+                  //     !mainThis.firstNewDatabase.objectStoreNames.contains("myStore")
                   //   ) {
-                  //     mainThis.newDatabase.createObjectStore("myStore", {
+                  //     mainThis.firstNewDatabase.createObjectStore("myStore", {
                   //       keyPath: "id",
                   //       autoIncrement: true,
                   //     });
                   //   }
                   // };
                   // request.onsuccess = (event) => {
-                  //   mainThis.newDatabase = event.target.result;
+                  //   mainThis.firstNewDatabase = event.target.result;
                   //   console.log("Database opened successfully");
                   //   console.log(event);
                   //   console.log(event.target);
 
                   //   // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-                  //   const transaction = mainThis.newDatabase.transaction(
+                  //   const transaction = mainThis.firstNewDatabase.transaction(
                   //     ["myStore"],
                   //     "readwrite"
                   //   );
@@ -132,7 +136,7 @@ export default {
 
                   //   transaction.oncomplete = () => {
                   //     console.log("Data added");
-                  //     const transaction = mainThis.newDatabase.transaction(
+                  //     const transaction = mainThis.firstNewDatabase.transaction(
                   //       ["myStore"],
                   //       "readonly"
                   //     );
@@ -142,7 +146,7 @@ export default {
                   //     request.onsuccess = (event) => {
                   //       // console.log(event.target.result.content);
                   //       const regex = /(?=\d{9},)/g;
-                  //       mainThis.finalBase =
+                  //       mainThis.firstFinalBase =
                   //         event.target.result.content.split(regex);
                   //     };
                   //   };
@@ -161,6 +165,14 @@ export default {
             });
         };
         reader.readAsArrayBuffer(file);
+      }
+    },
+    clearFile() {
+      this.firstNewDatabase = null;
+      this.firstFinalBase = [];
+
+      if (this.fileInputElement) {
+        this.fileInputElement.value = "";
       }
     },
   },
@@ -183,5 +195,10 @@ table {
 table,
 td {
   border: 2px solid black;
+}
+
+button {
+  border: 1px solid black;
+  margin-right: 1rem;
 }
 </style>
