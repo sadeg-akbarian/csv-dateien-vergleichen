@@ -25,40 +25,73 @@
   <button type="button" @click="clearFile('first')">Delete File 1</button>
   <button type="button" @click="clearFile('second')">Delete File 2</button>
   <h2>First File</h2>
-  <table v-if="firstFinalBase.length > 10">
-    <tr v-for="(vinyl, index) of firstFinalBase" :key="index">
+
+  <table v-if="Object.keys(firstFinalBase).length > 10">
+    <tr>
+      <td>listing_id</td>
+      <td>artist</td>
+      <td>title</td>
+      <td>label</td>
+      <td>catno</td>
+      <td>format</td>
+      <td>release_id</td>
+      <td>status</td>
+      <td>price</td>
+      <td>listed</td>
+      <td>comments</td>
+      <td>media_condition</td>
+      <td>sleeve_condition</td>
+    </tr>
+    <tr v-for="(vinyl, id, index) in firstFinalBase" :key="id">
       <template v-if="index < 10">
-        <td>{{ vinyl[0] }}</td>
-        <td>{{ vinyl[1] }}</td>
-        <td>{{ vinyl[2] }}</td>
-        <td>{{ vinyl[3] }}</td>
-        <td>{{ vinyl[4] }}</td>
-        <td>{{ vinyl[5] }}</td>
-        <td>{{ vinyl[6] }}</td>
-        <td>{{ vinyl[7] }}</td>
-        <td>{{ vinyl[8] }}</td>
-        <td>{{ vinyl[9] }}</td>
-        <td>{{ vinyl[11] }}</td>
-        <td>{{ vinyl[12] }}</td>
+        <td>{{ vinyl.listing_id }}</td>
+        <td>{{ vinyl.artist }}</td>
+        <td>{{ vinyl.title }}</td>
+        <td>{{ vinyl.label }}</td>
+        <td>{{ vinyl.catno }}</td>
+        <td>{{ vinyl.format }}</td>
+        <td>{{ vinyl.release_id }}</td>
+        <td>{{ vinyl.status }}</td>
+        <td>{{ vinyl.price }}</td>
+        <td>{{ vinyl.listed }}</td>
+        <td>{{ vinyl.comments }}</td>
+        <td>{{ vinyl.media_condition }}</td>
+        <td>{{ vinyl.sleeve_condition }}</td>
       </template>
     </tr>
   </table>
   <h2>Second File</h2>
-  <table v-if="secondFinalBase.length > 10">
-    <tr v-for="(vinyl, index) of secondFinalBase" :key="index">
+  <table v-if="Object.keys(secondFinalBase).length > 10">
+    <tr>
+      <td>listing_id</td>
+      <td>artist</td>
+      <td>title</td>
+      <td>label</td>
+      <td>catno</td>
+      <td>format</td>
+      <td>release_id</td>
+      <td>status</td>
+      <td>price</td>
+      <td>listed</td>
+      <td>comments</td>
+      <td>media_condition</td>
+      <td>sleeve_condition</td>
+    </tr>
+    <tr v-for="(vinyl, id, index) in secondFinalBase" :key="id">
       <template v-if="index < 10">
-        <td>{{ vinyl[0] }}</td>
-        <td>{{ vinyl[1] }}</td>
-        <td>{{ vinyl[2] }}</td>
-        <td>{{ vinyl[3] }}</td>
-        <td>{{ vinyl[4] }}</td>
-        <td>{{ vinyl[5] }}</td>
-        <td>{{ vinyl[6] }}</td>
-        <td>{{ vinyl[7] }}</td>
-        <td>{{ vinyl[8] }}</td>
-        <td>{{ vinyl[9] }}</td>
-        <td>{{ vinyl[11] }}</td>
-        <td>{{ vinyl[12] }}</td>
+        <td>{{ vinyl.listing_id }}</td>
+        <td>{{ vinyl.artist }}</td>
+        <td>{{ vinyl.title }}</td>
+        <td>{{ vinyl.label }}</td>
+        <td>{{ vinyl.catno }}</td>
+        <td>{{ vinyl.format }}</td>
+        <td>{{ vinyl.release_id }}</td>
+        <td>{{ vinyl.status }}</td>
+        <td>{{ vinyl.price }}</td>
+        <td>{{ vinyl.listed }}</td>
+        <td>{{ vinyl.comments }}</td>
+        <td>{{ vinyl.media_condition }}</td>
+        <td>{{ vinyl.sleeve_condition }}</td>
       </template>
     </tr>
   </table>
@@ -77,9 +110,9 @@ export default {
       secondFileName: "",
       secondInputElement: null,
       firstNewDatabase: null,
-      firstFinalBase: [],
+      firstFinalBase: {},
       secondNewDatabase: null,
-      secondFinalBase: [],
+      secondFinalBase: {},
     };
   },
   computed: {
@@ -174,10 +207,28 @@ export default {
 
                       const shortenedCleanedResult = cleanedResult.slice(0, 13);
 
+                      const newKey = shortenedCleanedResult[0];
+
+                      const newVinylObject = {
+                        listing_id: newKey,
+                        artist: shortenedCleanedResult[1],
+                        title: shortenedCleanedResult[2],
+                        label: shortenedCleanedResult[3],
+                        catno: shortenedCleanedResult[4],
+                        format: shortenedCleanedResult[5],
+                        release_id: shortenedCleanedResult[6],
+                        status: shortenedCleanedResult[7],
+                        price: shortenedCleanedResult[8],
+                        listed: shortenedCleanedResult[9],
+                        comments: shortenedCleanedResult[10],
+                        media_condition: shortenedCleanedResult[11],
+                        sleeve_condition: shortenedCleanedResult[12],
+                      };
+
                       if (event.target.id === "firstInput") {
-                        mainThis.firstFinalBase.push(shortenedCleanedResult);
+                        mainThis.firstFinalBase["" + newKey] = newVinylObject;
                       } else {
-                        mainThis.secondFinalBase.push(shortenedCleanedResult);
+                        mainThis.secondFinalBase["" + newKey] = newVinylObject;
                       }
                     } else {
                       console.error("No match found for:", platte);
@@ -196,7 +247,7 @@ export default {
     clearFile(whichOne) {
       if (whichOne === "first") {
         (this.firstFileName = ""), (this.firstNewDatabase = null);
-        this.firstFinalBase = [];
+        this.firstFinalBase = {};
 
         if (this.firstInputElement) {
           this.firstInputElement.value = "";
@@ -204,7 +255,7 @@ export default {
       } else {
         this.secondFileName = "";
         this.secondNewDatabase = null;
-        this.secondFinalBase = [];
+        this.secondFinalBase = {};
 
         if (this.secondInputElement) {
           this.secondInputElement.value = "";
