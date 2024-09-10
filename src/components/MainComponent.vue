@@ -2,7 +2,7 @@
   <h1>{{ msg }}</h1>
   <div class="input-area">
     <div class="first-input-area">
-      <label for="firstInput">Lade die <span>erste</span> CSV-Datei</label>
+      <label for="firstInput">Lade die <span>ältere</span> Zip-Datei</label>
       <input
         id="firstInput"
         type="file"
@@ -10,8 +10,10 @@
         @change="loadTheFile($event)"
       />
     </div>
+    <button type="button" @click="clearFile('first')">Delete File 1</button>
+    <div class="thePartition"></div>
     <div class="second-input-area">
-      <label for="secondInput">Lade die <span>zweite</span> CSV-Datei</label>
+      <label for="secondInput">Lade die <span>neuere</span> Zip-Datei</label>
       <input
         id="secondInput"
         type="file"
@@ -19,11 +21,11 @@
         @change="loadTheFile($event)"
       />
     </div>
+    <button type="button" @click="clearFile('second')">Delete File 2</button>
   </div>
   <p>{{ calculateFirstSizeInMB }}</p>
   <p>{{ calculateSecondSizeInMB }}</p>
-  <button type="button" @click="clearFile('first')">Delete File 1</button>
-  <button type="button" @click="clearFile('second')">Delete File 2</button>
+
   <h2>First File</h2>
 
   <table v-if="Object.keys(firstFinalBase).length > 10">
@@ -103,6 +105,8 @@ import JSZip from "jszip";
 export default {
   data() {
     return {
+      creationDateOfFirstZipFile: 0,
+      creationDateOfSecondZipFile: 0,
       csvContent: "",
       theDatabases: [],
       firstFileName: "",
@@ -138,7 +142,6 @@ export default {
   methods: {
     loadTheFile(event) {
       const mainThis = this;
-      console.log(event.target.files[0].name);
 
       if (
         event.target.id === "firstInput" &&
@@ -164,11 +167,49 @@ export default {
       console.log(file);
 
       if (event.target.id === "firstInput") {
-        mainThis.firstInputElement = event.target;
-        mainThis.firstFileName = event.target.files[0].name;
+        mainThis.creationDateOfFirstZipFile =
+          event.target.files[0].lastModified;
+        if (
+          mainThis.creationDateOfSecondZipFile === 0 ||
+          mainThis.creationDateOfFirstZipFile <
+            mainThis.creationDateOfSecondZipFile
+        ) {
+          mainThis.firstInputElement = event.target;
+          mainThis.firstFileName = event.target.files[0].name;
+        } else if (
+          mainThis.creationDateOfFirstZipFile >
+          mainThis.creationDateOfSecondZipFile
+        ) {
+          alert(
+            "Die obere Zip-Datei muss älter sein als die untere! Das Datum findest du im Dateinamen nach 'inventory-'. Bitte füge die obere Datei in das untere Auswahlfeld und die untere Datei in das obere Auswahlfeld ein."
+          );
+          mainThis.creationDateOfFirstZipFile = 0;
+          event.target.value = "";
+          console.log("qqqqqqqqqqqqq");
+          return;
+        }
       } else {
-        mainThis.secondInputElement = event.target;
-        mainThis.secondFileName = event.target.files[0].name;
+        mainThis.creationDateOfSecondZipFile =
+          event.target.files[0].lastModified;
+        if (
+          mainThis.creationDateOfFirstZipFile === 0 ||
+          mainThis.creationDateOfFirstZipFile <
+            mainThis.creationDateOfSecondZipFile
+        ) {
+          mainThis.secondInputElement = event.target;
+          mainThis.secondFileName = event.target.files[0].name;
+        } else if (
+          mainThis.creationDateOfFirstZipFile >
+          mainThis.creationDateOfSecondZipFile
+        ) {
+          alert(
+            "The upper Zip-file has to be older than the lower one. You can find the creation date in the file-name after 'inventory-'. Please insert the upper file in the lower input-field and the lower file in the upper input-field."
+          );
+          mainThis.creationDateOfSecondZipFile = 0;
+          event.target.value = "";
+          console.log("qqqqqqqqqqqqq");
+          return;
+        }
       }
 
       if (file) {
@@ -246,8 +287,10 @@ export default {
     },
     clearFile(whichOne) {
       if (whichOne === "first") {
-        (this.firstFileName = ""), (this.firstNewDatabase = null);
+        this.firstFileName = "";
+        this.firstNewDatabase = null;
         this.firstFinalBase = {};
+        this.creationDateOfFirstZipFile = 0;
 
         if (this.firstInputElement) {
           this.firstInputElement.value = "";
@@ -256,6 +299,7 @@ export default {
         this.secondFileName = "";
         this.secondNewDatabase = null;
         this.secondFinalBase = {};
+        this.creationDateOfSecondZipFile = 0;
 
         if (this.secondInputElement) {
           this.secondInputElement.value = "";
@@ -278,6 +322,18 @@ div {
 .first-input-area,
 .second-input-area {
   margin-top: 0;
+}
+
+.input-area,
+.thePartition {
+  border: 0.75rem solid blue;
+  margin: 0;
+  margin-top: 2rem;
+}
+
+.input-area {
+  padding: 1rem;
+  margin-bottom: 2rem;
 }
 
 .second-input-area {
@@ -307,7 +363,10 @@ td {
 
 button {
   border: 1px solid black;
-  margin-right: 1rem;
+}
+
+button:nth-child(2) {
   margin-top: 2rem;
 }
+/* button:nth-child(1) */
 </style>
