@@ -25,6 +25,7 @@
   </div>
   <p>{{ calculateFirstSizeInMB }}</p>
   <p>{{ calculateSecondSizeInMB }}</p>
+  <button type="button" @click="compareTheFiles()">Compare the files</button>
 
   <h2>First File</h2>
 
@@ -107,8 +108,6 @@ export default {
     return {
       creationDateOfFirstZipFile: 0,
       creationDateOfSecondZipFile: 0,
-      csvContent: "",
-      theDatabases: [],
       firstFileName: "",
       firstInputElement: null,
       secondFileName: "",
@@ -117,6 +116,10 @@ export default {
       firstFinalBase: {},
       secondNewDatabase: null,
       secondFinalBase: {},
+      deleteVinyls: [],
+      sameKeys: [],
+      newVinyls: [],
+      changedVinyls: {},
     };
   },
   computed: {
@@ -224,7 +227,6 @@ export default {
                 file.async("string").then((content) => {
                   console.log("Datei:", relativePath);
                   console.log(typeof content);
-                  console.log(mainThis.theDatabases);
                   const regex = /(?=\d{9},)/g;
 
                   let whichNewDataBase;
@@ -306,6 +308,75 @@ export default {
         }
       }
     },
+    compareTheFiles() {
+      for (let theKey in this.firstFinalBase) {
+        if (this.secondFinalBase.hasOwnProperty(theKey)) {
+          this.sameKeys.push(theKey);
+        } else {
+          this.deleteVinyls.push(theKey);
+        }
+      }
+      console.log(this.deleteVinyls.length);
+      console.log(this.sameKeys.length);
+      // console.log(this.sameKeys);
+      for (let theKey in this.secondFinalBase) {
+        if (!this.firstFinalBase.hasOwnProperty(theKey)) {
+          this.newVinyls.push(theKey);
+        }
+      }
+      console.log(this.newVinyls.length);
+      for (let theKey of this.sameKeys) {
+        const vinylInOldList = Object.values(this.firstFinalBase["" + theKey]);
+        const vinylInNewList = Object.values(this.secondFinalBase["" + theKey]);
+        for (let i = 0; i < 13; i++) {
+          if (vinylInOldList[i] !== vinylInNewList[i]) {
+            let majorPriceDifference = false;
+            if (i === 8) {
+              // console.log("Preis");
+              const oldPriceInNumber = Number(vinylInOldList[8]);
+              const newPriceInNumber = Number(vinylInNewList[8]);
+              // console.log(oldPriceInNumber);
+              // console.log(newPriceInNumber);
+              const priceDiffenrence = Math.abs(
+                oldPriceInNumber - newPriceInNumber
+              );
+              // console.log(priceDiffenrence);
+              if (priceDiffenrence >= 0.11) {
+                majorPriceDifference = true;
+              }
+            }
+            // if (i === 10) {
+            //   console.log("Comments");
+            // }
+            // if (i === 11) {
+            //   console.log("media_condition");
+            // }
+            // if (i === 12) {
+            //   console.log("sleeve_condition");
+            // }
+            if (
+              (i === 8 && majorPriceDifference === true) ||
+              i === 10 ||
+              i === 11 ||
+              i === 12
+            ) {
+              // console.log(theKey);
+              // console.log(this.secondFinalBase["" + theKey]);
+              // console.log(vinylInNewList);
+              // console.log(vinylInOldList[i]);
+              // console.log(vinylInNewList[i]);
+              // const newObject = {
+              //   listing_id:
+              // }
+              this.changedVinyls["" + theKey] =
+                this.secondFinalBase["" + theKey];
+            }
+            // console.log("---------------------------------------");
+          }
+        }
+      }
+      console.log(Object.keys(this.changedVinyls).length);
+    },
   },
   props: {
     msg: String,
@@ -331,8 +402,13 @@ div {
   margin-top: 2rem;
 }
 
+.thePartition {
+  margin-top: 7rem;
+}
+
 .input-area {
   padding: 1rem;
+  padding-bottom: 7rem;
   margin-bottom: 2rem;
 }
 
