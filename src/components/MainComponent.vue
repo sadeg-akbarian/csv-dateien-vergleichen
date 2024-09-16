@@ -23,9 +23,34 @@
     </div>
     <button type="button" @click="clearFile('second')">Delete File 2</button>
   </div>
-  <p>{{ calculateFirstSizeInMB }}</p>
-  <p>{{ calculateSecondSizeInMB }}</p>
+  <!--
+    <p>{{ calculateFirstSizeInMB }}</p>
+    <p>{{ calculateSecondSizeInMB }}</p>  
+  -->
   <button type="button" @click="compareTheFiles()">Compare the files</button>
+
+  <div>
+    <label for="oldList">Search in old List</label>
+    <input
+      type="text"
+      id="oldList"
+      placeholder="Type in the ID"
+      v-model.trim="searchedIdOld"
+    />
+    <button type="button" @click="searchInOld('old')">Search</button>
+    <p v-text="returnedOldString"></p>
+  </div>
+  <div>
+    <label for="newList">Search in new List</label>
+    <input
+      type="text"
+      id="newList"
+      placeholder="Type in the ID"
+      v-model.trim="searchedIdNew"
+    />
+    <button type="button" @click="searchInOld('new')">Search</button>
+    <p v-text="returnedNewString"></p>
+  </div>
 
   <h2>First File</h2>
 
@@ -106,6 +131,10 @@ import JSZip from "jszip";
 export default {
   data() {
     return {
+      oldWeirdVinylsTypeA: {},
+      newWeirdVinylsTypeA: {},
+      oldWeirdVinylsTypeB: {},
+      newWeirdVinylsTypeB: {},
       creationDateOfFirstZipFile: 0,
       creationDateOfSecondZipFile: 0,
       firstFileName: "",
@@ -120,6 +149,12 @@ export default {
       sameKeys: [],
       newVinyls: [],
       changedVinyls: {},
+      searchedIdOld: "",
+      returnedOldString:
+        "If you typed in the ID and clicked on the Search-button and still nothing is displayed, then you typed in a non-existant/wrong ID",
+      searchedIdNew: "",
+      returnedNewString:
+        "If you typed in the ID and clicked on the Search-button and still nothing is displayed, then you typed in a non-existant/wrong ID",
     };
   },
   computed: {
@@ -143,6 +178,31 @@ export default {
     },
   },
   methods: {
+    searchInOld(whichOne) {
+      if (whichOne === "old") {
+        if (this.searchedIdOld.length !== 9) {
+          alert("The ID has to have 9 figures!!!");
+        } else {
+          for (let entry of this.firstNewDatabase) {
+            const theID = entry.slice(0, 9);
+            if (this.searchedIdOld === theID) {
+              this.returnedOldString = entry;
+            }
+          }
+        }
+      } else {
+        if (this.searchedIdNew.length !== 9) {
+          alert("The ID has to have 9 figures!!!");
+        } else {
+          for (let entry of this.secondNewDatabase) {
+            const theID = entry.slice(0, 9);
+            if (this.searchedIdNew === theID) {
+              this.returnedNewString = entry;
+            }
+          }
+        }
+      }
+    },
     loadTheFile(event) {
       const mainThis = this;
 
@@ -227,7 +287,7 @@ export default {
                 file.async("string").then((content) => {
                   console.log("Datei:", relativePath);
                   console.log(typeof content);
-                  const regex = /(?=\d{9},)/g;
+                  const regex = /\b\d{9,}.*?(?=\b\d{9,}\b|$)/g;
 
                   let whichNewDataBase;
                   if (event.target.id === "firstInput") {
@@ -268,15 +328,60 @@ export default {
                         sleeve_condition: shortenedCleanedResult[12],
                       };
 
-                      if (event.target.id === "firstInput") {
-                        mainThis.firstFinalBase["" + newKey] = newVinylObject;
+                      if (newVinylObject.status === undefined) {
+                        newVinylObject.originalString = platte;
+                        if (event.target.id === "firstInput") {
+                          mainThis.oldWeirdVinylsTypeA["" + newKey] =
+                            newVinylObject;
+                        } else {
+                          mainThis.newWeirdVinylsTypeA["" + newKey] =
+                            newVinylObject;
+                        }
+                      } else if (newVinylObject.status.length > 15) {
+                        newVinylObject.originalString = platte;
+                        if (event.target.id === "firstInput") {
+                          mainThis.oldWeirdVinylsTypeB["" + newKey] =
+                            newVinylObject;
+                        } else {
+                          mainThis.newWeirdVinylsTypeB["" + newKey] =
+                            newVinylObject;
+                        }
                       } else {
-                        mainThis.secondFinalBase["" + newKey] = newVinylObject;
+                        if (event.target.id === "firstInput") {
+                          mainThis.firstFinalBase["" + newKey] = newVinylObject;
+                        } else {
+                          mainThis.secondFinalBase["" + newKey] =
+                            newVinylObject;
+                        }
                       }
                     } else {
                       console.error("No match found for:", platte);
                     }
                   }
+                  const howManyOldWeirdVinylsTypeA = Object.keys(
+                    mainThis.oldWeirdVinylsTypeA
+                  ).length;
+                  const howManyNewWeirdVinylsTypeA = Object.keys(
+                    mainThis.newWeirdVinylsTypeA
+                  ).length;
+                  console.log(
+                    howManyOldWeirdVinylsTypeA + " old weird Vinyls Type A"
+                  );
+                  console.log(
+                    howManyNewWeirdVinylsTypeA + " new weird Vinyls Type A"
+                  );
+                  const howManyOldWeirdVinylsTypeB = Object.keys(
+                    mainThis.oldWeirdVinylsTypeB
+                  ).length;
+                  const howManyNewWeirdVinylsTypeB = Object.keys(
+                    mainThis.newWeirdVinylsTypeB
+                  ).length;
+                  console.log(
+                    howManyOldWeirdVinylsTypeB + " old weird Vinyls Type B"
+                  );
+                  console.log(
+                    howManyNewWeirdVinylsTypeB + " new weird Vinyls Type B"
+                  );
                 });
               });
             })
@@ -331,6 +436,13 @@ export default {
         for (let i = 0; i < 13; i++) {
           if (vinylInOldList[i] !== vinylInNewList[i]) {
             let majorPriceDifference = false;
+            if (i === 7) {
+              console.log(theKey);
+              console.log(vinylInOldList);
+              console.log(vinylInNewList);
+              console.log(vinylInOldList[i]);
+              console.log(vinylInNewList[i]);
+            }
             if (i === 8) {
               // console.log("Preis");
               const oldPriceInNumber = Number(vinylInOldList[8]);
@@ -344,6 +456,7 @@ export default {
               if (priceDiffenrence >= 0.11) {
                 majorPriceDifference = true;
               }
+              // 899534124
             }
             // if (i === 10) {
             //   console.log("Comments");
@@ -444,5 +557,8 @@ button {
 button:nth-child(2) {
   margin-top: 2rem;
 }
-/* button:nth-child(1) */
+
+input + button {
+  margin-left: 1rem;
+}
 </style>
