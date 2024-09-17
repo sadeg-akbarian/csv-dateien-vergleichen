@@ -180,24 +180,24 @@ export default {
   methods: {
     searchInOld(whichOne) {
       if (whichOne === "old") {
-        if (this.searchedIdOld.length !== 9) {
-          alert("The ID has to have 9 figures!!!");
+        if (this.searchedIdOld.length < 9) {
+          alert("The ID has to have at least 9 figures!!!");
         } else {
-          for (let entry of this.firstNewDatabase) {
-            const theID = entry.slice(0, 9);
-            if (this.searchedIdOld === theID) {
-              this.returnedOldString = entry;
+          for (let entry in this.firstNewDatabase) {
+            if (this.searchedIdOld === entry) {
+              this.returnedOldString =
+                entry + ", " + this.firstNewDatabase[entry];
             }
           }
         }
       } else {
-        if (this.searchedIdNew.length !== 9) {
-          alert("The ID has to have 9 figures!!!");
+        if (this.searchedIdNew.length < 9) {
+          alert("The ID has to have at least 9 figures!!!");
         } else {
-          for (let entry of this.secondNewDatabase) {
-            const theID = entry.slice(0, 9);
-            if (this.searchedIdNew === theID) {
-              this.returnedNewString = entry;
+          for (let entry in this.secondNewDatabase) {
+            if (this.searchedIdNew === entry) {
+              this.returnedNewString =
+                entry + ", " + this.secondNewDatabase[entry];
             }
           }
         }
@@ -287,20 +287,31 @@ export default {
                 file.async("string").then((content) => {
                   console.log("Datei:", relativePath);
                   console.log(typeof content);
-                  const regex = /\b\d{9,}.*?(?=\b\d{9,}\b|$)/g;
+                  const regex = /(\d{9,}),/g;
+
+                  const helpingArray = content.split(regex);
+                  const objectForNewDatabase = {
+                    headline: helpingArray[0],
+                  };
+                  for (let i = 1; i < helpingArray.length; i += 2) {
+                    objectForNewDatabase["" + helpingArray[i]] =
+                      helpingArray[i + 1];
+                  }
 
                   let whichNewDataBase;
                   if (event.target.id === "firstInput") {
-                    mainThis.firstNewDatabase = content.split(regex);
+                    mainThis.firstNewDatabase = objectForNewDatabase;
                     whichNewDataBase = mainThis.firstNewDatabase;
                   } else {
-                    mainThis.secondNewDatabase = content.split(regex);
+                    mainThis.secondNewDatabase = objectForNewDatabase;
                     whichNewDataBase = mainThis.secondNewDatabase;
                   }
 
-                  for (let platte of whichNewDataBase) {
+                  for (let platte in whichNewDataBase) {
                     // Split-Kommas, die nicht innerhalb von Anführungszeichen liegen
-                    const result = platte.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+                    const result = whichNewDataBase[platte].match(
+                      /(".*?"|[^",]+)(?=\s*,|\s*$)/g
+                    );
 
                     if (result) {
                       // Entferne die umschließenden Anführungszeichen aus den Ergebnissen
@@ -308,49 +319,49 @@ export default {
                         item.trim().replace(/^"(.*)"$/, "$1")
                       );
 
-                      const shortenedCleanedResult = cleanedResult.slice(0, 13);
-
-                      const newKey = shortenedCleanedResult[0];
+                      const shortenedCleanedResult = cleanedResult.slice(0, 12);
 
                       const newVinylObject = {
-                        listing_id: newKey,
-                        artist: shortenedCleanedResult[1],
-                        title: shortenedCleanedResult[2],
-                        label: shortenedCleanedResult[3],
-                        catno: shortenedCleanedResult[4],
-                        format: shortenedCleanedResult[5],
-                        release_id: shortenedCleanedResult[6],
-                        status: shortenedCleanedResult[7],
-                        price: shortenedCleanedResult[8],
-                        listed: shortenedCleanedResult[9],
-                        comments: shortenedCleanedResult[10],
-                        media_condition: shortenedCleanedResult[11],
-                        sleeve_condition: shortenedCleanedResult[12],
+                        listing_id: platte,
+                        artist: shortenedCleanedResult[0],
+                        title: shortenedCleanedResult[1],
+                        label: shortenedCleanedResult[2],
+                        catno: shortenedCleanedResult[3],
+                        format: shortenedCleanedResult[4],
+                        release_id: shortenedCleanedResult[5],
+                        status: shortenedCleanedResult[6],
+                        price: shortenedCleanedResult[7],
+                        listed: shortenedCleanedResult[8],
+                        comments: shortenedCleanedResult[9],
+                        media_condition: shortenedCleanedResult[10],
+                        sleeve_condition: shortenedCleanedResult[11],
                       };
 
                       if (newVinylObject.status === undefined) {
-                        newVinylObject.originalString = platte;
+                        newVinylObject.originalString =
+                          whichNewDataBase[platte];
                         if (event.target.id === "firstInput") {
-                          mainThis.oldWeirdVinylsTypeA["" + newKey] =
+                          mainThis.oldWeirdVinylsTypeA["" + platte] =
                             newVinylObject;
                         } else {
-                          mainThis.newWeirdVinylsTypeA["" + newKey] =
+                          mainThis.newWeirdVinylsTypeA["" + platte] =
                             newVinylObject;
                         }
                       } else if (newVinylObject.status.length > 15) {
-                        newVinylObject.originalString = platte;
+                        newVinylObject.originalString =
+                          whichNewDataBase[platte];
                         if (event.target.id === "firstInput") {
-                          mainThis.oldWeirdVinylsTypeB["" + newKey] =
+                          mainThis.oldWeirdVinylsTypeB["" + platte] =
                             newVinylObject;
                         } else {
-                          mainThis.newWeirdVinylsTypeB["" + newKey] =
+                          mainThis.newWeirdVinylsTypeB["" + platte] =
                             newVinylObject;
                         }
                       } else {
                         if (event.target.id === "firstInput") {
-                          mainThis.firstFinalBase["" + newKey] = newVinylObject;
+                          mainThis.firstFinalBase["" + platte] = newVinylObject;
                         } else {
-                          mainThis.secondFinalBase["" + newKey] =
+                          mainThis.secondFinalBase["" + platte] =
                             newVinylObject;
                         }
                       }
