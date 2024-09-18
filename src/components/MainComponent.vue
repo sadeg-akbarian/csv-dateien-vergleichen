@@ -37,7 +37,7 @@
       placeholder="Type in the ID"
       v-model.trim="searchedIdOld"
     />
-    <button type="button" @click="searchInOld('old')">Search</button>
+    <button type="button" @click="searchInNewDatabase('old')">Search</button>
     <p v-text="returnedOldString"></p>
   </div>
   <div>
@@ -48,13 +48,13 @@
       placeholder="Type in the ID"
       v-model.trim="searchedIdNew"
     />
-    <button type="button" @click="searchInOld('new')">Search</button>
+    <button type="button" @click="searchInNewDatabase('new')">Search</button>
     <p v-text="returnedNewString"></p>
   </div>
 
   <h2>First File</h2>
 
-  <table v-if="Object.keys(firstFinalBase).length > 10">
+  <table v-if="Object.keys(firstFinalBase).length !== 0">
     <tr>
       <td>listing_id</td>
       <td>artist</td>
@@ -70,7 +70,7 @@
       <td>media_condition</td>
       <td>sleeve_condition</td>
     </tr>
-    <tr v-for="(vinyl, id, index) in firstFinalBase" :key="id">
+    <tr v-for="(vinyl, id, index) in firstFinalBase.data" :key="id">
       <template v-if="index < 10">
         <td>{{ vinyl.listing_id }}</td>
         <td>{{ vinyl.artist }}</td>
@@ -89,7 +89,7 @@
     </tr>
   </table>
   <h2>Second File</h2>
-  <table v-if="Object.keys(secondFinalBase).length > 10">
+  <table v-if="Object.keys(secondFinalBase).length !== 0">
     <tr>
       <td>listing_id</td>
       <td>artist</td>
@@ -105,7 +105,7 @@
       <td>media_condition</td>
       <td>sleeve_condition</td>
     </tr>
-    <tr v-for="(vinyl, id, index) in secondFinalBase" :key="id">
+    <tr v-for="(vinyl, id, index) in secondFinalBase.data" :key="id">
       <template v-if="index < 10">
         <td>{{ vinyl.listing_id }}</td>
         <td>{{ vinyl.artist }}</td>
@@ -127,23 +127,20 @@
 
 <script>
 import JSZip from "jszip";
+import Papa from "papaparse";
 
 export default {
   data() {
     return {
-      oldWeirdVinylsTypeA: {},
-      newWeirdVinylsTypeA: {},
-      oldWeirdVinylsTypeB: {},
-      newWeirdVinylsTypeB: {},
       creationDateOfFirstZipFile: 0,
       creationDateOfSecondZipFile: 0,
       firstFileName: "",
       firstInputElement: null,
       secondFileName: "",
       secondInputElement: null,
-      firstNewDatabase: null,
+      firstNewDatabase: "",
       firstFinalBase: {},
-      secondNewDatabase: null,
+      secondNewDatabase: "",
       secondFinalBase: {},
       deleteVinyls: [],
       sameKeys: [],
@@ -178,29 +175,39 @@ export default {
     },
   },
   methods: {
-    searchInOld(whichOne) {
+    searchInNewDatabase(whichOne) {
       if (whichOne === "old") {
-        if (this.searchedIdOld.length < 9) {
-          alert("The ID has to have at least 9 figures!!!");
-        } else {
-          for (let entry in this.firstNewDatabase) {
-            if (this.searchedIdOld === entry) {
-              this.returnedOldString =
-                entry + ", " + this.firstNewDatabase[entry];
-            }
-          }
-        }
+        console.log(this.searchedIdOld);
+        const indexOfSearchedID = this.firstNewDatabase.indexOf(
+          this.searchedIdOld
+        );
+        console.log(indexOfSearchedID);
+        const indexOfEndOfVinylData = this.firstNewDatabase.indexOf(
+          "\n",
+          indexOfSearchedID
+        );
+        console.log(indexOfEndOfVinylData);
+        const wantedData = this.firstNewDatabase.substring(
+          indexOfSearchedID,
+          indexOfEndOfVinylData
+        );
+        this.returnedOldString = wantedData;
       } else {
-        if (this.searchedIdNew.length < 9) {
-          alert("The ID has to have at least 9 figures!!!");
-        } else {
-          for (let entry in this.secondNewDatabase) {
-            if (this.searchedIdNew === entry) {
-              this.returnedNewString =
-                entry + ", " + this.secondNewDatabase[entry];
-            }
-          }
-        }
+        console.log(this.searchedIdNew);
+        const indexOfSearchedID = this.secondNewDatabase.indexOf(
+          this.searchedIdNew
+        );
+        console.log(indexOfSearchedID);
+        const indexOfEndOfVinylData = this.secondNewDatabase.indexOf(
+          "\n",
+          indexOfSearchedID
+        );
+        console.log(indexOfEndOfVinylData);
+        const wantedData = this.secondNewDatabase.substring(
+          indexOfSearchedID,
+          indexOfEndOfVinylData
+        );
+        this.returnedNewString = wantedData;
       }
     },
     loadTheFile(event) {
@@ -287,112 +294,32 @@ export default {
                 file.async("string").then((content) => {
                   console.log("Datei:", relativePath);
                   console.log(typeof content);
-                  const regex = /(\d{9,}),/g;
 
-                  const helpingArray = content.split(regex);
-                  const objectForNewDatabase = {
-                    headline: helpingArray[0],
-                  };
-                  for (let i = 1; i < helpingArray.length; i += 2) {
-                    objectForNewDatabase["" + helpingArray[i]] =
-                      helpingArray[i + 1];
-                  }
-
-                  let whichNewDataBase;
-                  if (event.target.id === "firstInput") {
-                    mainThis.firstNewDatabase = objectForNewDatabase;
-                    whichNewDataBase = mainThis.firstNewDatabase;
-                  } else {
-                    mainThis.secondNewDatabase = objectForNewDatabase;
-                    whichNewDataBase = mainThis.secondNewDatabase;
-                  }
-
-                  for (let platte in whichNewDataBase) {
-                    // Split-Kommas, die nicht innerhalb von Anführungszeichen liegen
-                    const result = whichNewDataBase[platte].match(
-                      /(".*?"|[^",]+)(?=\s*,|\s*$)/g
-                    );
-
-                    if (result) {
-                      // Entferne die umschließenden Anführungszeichen aus den Ergebnissen
-                      const cleanedResult = result.map((item) =>
-                        item.trim().replace(/^"(.*)"$/, "$1")
-                      );
-
-                      const shortenedCleanedResult = cleanedResult.slice(0, 12);
-
-                      const newVinylObject = {
-                        listing_id: platte,
-                        artist: shortenedCleanedResult[0],
-                        title: shortenedCleanedResult[1],
-                        label: shortenedCleanedResult[2],
-                        catno: shortenedCleanedResult[3],
-                        format: shortenedCleanedResult[4],
-                        release_id: shortenedCleanedResult[5],
-                        status: shortenedCleanedResult[6],
-                        price: shortenedCleanedResult[7],
-                        listed: shortenedCleanedResult[8],
-                        comments: shortenedCleanedResult[9],
-                        media_condition: shortenedCleanedResult[10],
-                        sleeve_condition: shortenedCleanedResult[11],
-                      };
-
-                      if (newVinylObject.status === undefined) {
-                        newVinylObject.originalString =
-                          whichNewDataBase[platte];
-                        if (event.target.id === "firstInput") {
-                          mainThis.oldWeirdVinylsTypeA["" + platte] =
-                            newVinylObject;
-                        } else {
-                          mainThis.newWeirdVinylsTypeA["" + platte] =
-                            newVinylObject;
-                        }
-                      } else if (newVinylObject.status.length > 15) {
-                        newVinylObject.originalString =
-                          whichNewDataBase[platte];
-                        if (event.target.id === "firstInput") {
-                          mainThis.oldWeirdVinylsTypeB["" + platte] =
-                            newVinylObject;
-                        } else {
-                          mainThis.newWeirdVinylsTypeB["" + platte] =
-                            newVinylObject;
-                        }
-                      } else {
-                        if (event.target.id === "firstInput") {
-                          mainThis.firstFinalBase["" + platte] = newVinylObject;
-                        } else {
-                          mainThis.secondFinalBase["" + platte] =
-                            newVinylObject;
-                        }
+                  // Papa Parse zum Verarbeiten des CSV-Inhalts
+                  Papa.parse(content, {
+                    header: true, // Wenn du Kopfzeilen in der CSV hast, kannst du diese Option setzen
+                    skipEmptyLines: true, // Leere Zeilen überspringen
+                    complete: (results) => {
+                      const dataFromArrayIntoObject = {};
+                      for (let entry of results.data) {
+                        dataFromArrayIntoObject["" + entry.listing_id] = entry;
                       }
-                    } else {
-                      console.error("No match found for:", platte);
-                    }
-                  }
-                  const howManyOldWeirdVinylsTypeA = Object.keys(
-                    mainThis.oldWeirdVinylsTypeA
-                  ).length;
-                  const howManyNewWeirdVinylsTypeA = Object.keys(
-                    mainThis.newWeirdVinylsTypeA
-                  ).length;
-                  console.log(
-                    howManyOldWeirdVinylsTypeA + " old weird Vinyls Type A"
-                  );
-                  console.log(
-                    howManyNewWeirdVinylsTypeA + " new weird Vinyls Type A"
-                  );
-                  const howManyOldWeirdVinylsTypeB = Object.keys(
-                    mainThis.oldWeirdVinylsTypeB
-                  ).length;
-                  const howManyNewWeirdVinylsTypeB = Object.keys(
-                    mainThis.newWeirdVinylsTypeB
-                  ).length;
-                  console.log(
-                    howManyOldWeirdVinylsTypeB + " old weird Vinyls Type B"
-                  );
-                  console.log(
-                    howManyNewWeirdVinylsTypeB + " new weird Vinyls Type B"
-                  );
+                      results.data = dataFromArrayIntoObject;
+                      // Hier wird das geparste CSV gespeichert
+                      if (event.target.id === "firstInput") {
+                        mainThis.firstNewDatabase = content;
+                        console.log(results);
+                        mainThis.firstFinalBase = results;
+                      } else {
+                        mainThis.secondNewDatabase = content;
+                        console.log(results);
+                        mainThis.secondFinalBase = results;
+                      }
+                    },
+                    error: (error) => {
+                      console.error("Error parsing CSV:", error);
+                    },
+                  });
                 });
               });
             })
