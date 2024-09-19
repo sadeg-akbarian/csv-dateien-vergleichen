@@ -70,7 +70,7 @@
       <td>media_condition</td>
       <td>sleeve_condition</td>
     </tr>
-    <tr v-for="(vinyl, id, index) in firstFinalBase.data" :key="id">
+    <tr v-for="(vinyl, id, index) in firstFinalBase" :key="id">
       <template v-if="index < 10">
         <td>{{ vinyl.listing_id }}</td>
         <td>{{ vinyl.artist }}</td>
@@ -105,7 +105,7 @@
       <td>media_condition</td>
       <td>sleeve_condition</td>
     </tr>
-    <tr v-for="(vinyl, id, index) in secondFinalBase.data" :key="id">
+    <tr v-for="(vinyl, id, index) in secondFinalBase" :key="id">
       <template v-if="index < 10">
         <td>{{ vinyl.listing_id }}</td>
         <td>{{ vinyl.artist }}</td>
@@ -302,18 +302,23 @@ export default {
                     complete: (results) => {
                       const dataFromArrayIntoObject = {};
                       for (let entry of results.data) {
+                        delete entry.accept_offer;
+                        delete entry.external_id;
+                        delete entry.format_quantity;
+                        delete entry.location;
+                        delete entry.quantity;
+                        delete entry.weight;
                         dataFromArrayIntoObject["" + entry.listing_id] = entry;
                       }
-                      results.data = dataFromArrayIntoObject;
                       // Hier wird das geparste CSV gespeichert
                       if (event.target.id === "firstInput") {
                         mainThis.firstNewDatabase = content;
                         console.log(results);
-                        mainThis.firstFinalBase = results;
+                        mainThis.firstFinalBase = dataFromArrayIntoObject;
                       } else {
                         mainThis.secondNewDatabase = content;
                         console.log(results);
-                        mainThis.secondFinalBase = results;
+                        mainThis.secondFinalBase = dataFromArrayIntoObject;
                       }
                     },
                     error: (error) => {
@@ -359,74 +364,45 @@ export default {
           this.deleteVinyls.push(theKey);
         }
       }
-      console.log(this.deleteVinyls.length);
-      console.log(this.sameKeys.length);
-      // console.log(this.sameKeys);
       for (let theKey in this.secondFinalBase) {
         if (!this.firstFinalBase.hasOwnProperty(theKey)) {
           this.newVinyls.push(theKey);
         }
       }
-      console.log(this.newVinyls.length);
       for (let theKey of this.sameKeys) {
-        const vinylInOldList = Object.values(this.firstFinalBase["" + theKey]);
-        const vinylInNewList = Object.values(this.secondFinalBase["" + theKey]);
-        for (let i = 0; i < 13; i++) {
-          if (vinylInOldList[i] !== vinylInNewList[i]) {
-            let majorPriceDifference = false;
-            if (i === 7) {
-              console.log(theKey);
-              console.log(vinylInOldList);
-              console.log(vinylInNewList);
-              console.log(vinylInOldList[i]);
-              console.log(vinylInNewList[i]);
-            }
-            if (i === 8) {
-              // console.log("Preis");
-              const oldPriceInNumber = Number(vinylInOldList[8]);
-              const newPriceInNumber = Number(vinylInNewList[8]);
-              // console.log(oldPriceInNumber);
-              // console.log(newPriceInNumber);
-              const priceDiffenrence = Math.abs(
-                oldPriceInNumber - newPriceInNumber
-              );
-              // console.log(priceDiffenrence);
-              if (priceDiffenrence >= 0.11) {
-                majorPriceDifference = true;
-              }
-              // 899534124
-            }
-            // if (i === 10) {
-            //   console.log("Comments");
-            // }
-            // if (i === 11) {
-            //   console.log("media_condition");
-            // }
-            // if (i === 12) {
-            //   console.log("sleeve_condition");
-            // }
-            if (
-              (i === 8 && majorPriceDifference === true) ||
-              i === 10 ||
-              i === 11 ||
-              i === 12
-            ) {
-              // console.log(theKey);
-              // console.log(this.secondFinalBase["" + theKey]);
-              // console.log(vinylInNewList);
-              // console.log(vinylInOldList[i]);
-              // console.log(vinylInNewList[i]);
-              // const newObject = {
-              //   listing_id:
-              // }
-              this.changedVinyls["" + theKey] =
-                this.secondFinalBase["" + theKey];
-            }
-            // console.log("---------------------------------------");
+        const vinylInOldList = this.firstFinalBase["" + theKey];
+        const vinylInNewList = this.secondFinalBase["" + theKey];
+        let majorPriceDifference = false;
+        if (vinylInOldList.price !== vinylInNewList.price) {
+          const oldPrice = Number(vinylInOldList.price);
+          const newPrice = Number(vinylInNewList.price);
+          const priceDifference = Math.abs(oldPrice - newPrice);
+          if (priceDifference >= 0.11) {
+            majorPriceDifference = true;
           }
         }
+        if (
+          (vinylInOldList.media_condition !== vinylInNewList.media_condition ||
+            vinylInOldList.sleeve_condition !==
+              vinylInNewList.sleeve_condition ||
+            vinylInOldList.comments !== vinylInNewList.comments ||
+            majorPriceDifference === true) &&
+          vinylInOldList.status === vinylInNewList.status
+        ) {
+          this.changedVinyls["" + theKey] = vinylInNewList;
+        } else if (
+          vinylInOldList.status === "For Sale" &&
+          vinylInNewList.status === "Sold"
+        ) {
+          this.deleteVinyls.push(theKey);
+        } else if (
+          vinylInOldList.status === "Sold" &&
+          vinylInNewList.status === "For Sale"
+        ) {
+          this.deleteVinyls.push(theKey);
+          this.newVinyls.push(theKey);
+        }
       }
-      console.log(Object.keys(this.changedVinyls).length);
     },
   },
   props: {
