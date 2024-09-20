@@ -7,7 +7,7 @@
         id="firstInput"
         type="file"
         accept=".zip"
-        @change="loadTheFile($event)"
+        @change="storeTheFile($event)"
       />
     </div>
     <button type="button" @click="clearFile('first')">Delete File 1</button>
@@ -18,7 +18,7 @@
         id="secondInput"
         type="file"
         accept=".zip"
-        @change="loadTheFile($event)"
+        @change="storeTheFile($event)"
       />
     </div>
     <button type="button" @click="clearFile('second')">Delete File 2</button>
@@ -136,6 +136,8 @@ export default {
       creationDateOfSecondZipFile: 0,
       firstFileName: "",
       firstInputElement: null,
+      firstZipFile: null,
+      secondZipFile: null,
       secondFileName: "",
       secondInputElement: null,
       firstNewDatabase: "",
@@ -177,32 +179,26 @@ export default {
   methods: {
     searchInNewDatabase(whichOne) {
       if (whichOne === "old") {
-        console.log(this.searchedIdOld);
         const indexOfSearchedID = this.firstNewDatabase.indexOf(
           this.searchedIdOld
         );
-        console.log(indexOfSearchedID);
         const indexOfEndOfVinylData = this.firstNewDatabase.indexOf(
           "\n",
           indexOfSearchedID
         );
-        console.log(indexOfEndOfVinylData);
         const wantedData = this.firstNewDatabase.substring(
           indexOfSearchedID,
           indexOfEndOfVinylData
         );
         this.returnedOldString = wantedData;
       } else {
-        console.log(this.searchedIdNew);
         const indexOfSearchedID = this.secondNewDatabase.indexOf(
           this.searchedIdNew
         );
-        console.log(indexOfSearchedID);
         const indexOfEndOfVinylData = this.secondNewDatabase.indexOf(
           "\n",
           indexOfSearchedID
         );
-        console.log(indexOfEndOfVinylData);
         const wantedData = this.secondNewDatabase.substring(
           indexOfSearchedID,
           indexOfEndOfVinylData
@@ -210,9 +206,67 @@ export default {
         this.returnedNewString = wantedData;
       }
     },
-    loadTheFile(event) {
+    unpackAndParseTheFile(whichFile) {
       const mainThis = this;
+      let file;
+      if (whichFile === "oldFile") {
+        file = this.firstZipFile;
+      } else {
+        file = this.secondZipFile;
+      }
 
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const arrayBuffer = e.target.result;
+          const jszip = new JSZip();
+          jszip
+            .loadAsync(arrayBuffer)
+            .then((zip) => {
+              zip.forEach((relativePath, file) => {
+                file.async("string").then((content) => {
+                  // Papa Parse zum Verarbeiten des CSV-Inhalts
+                  Papa.parse(content, {
+                    header: true, // Wenn du Kopfzeilen in der CSV hast, kannst du diese Option setzen
+                    skipEmptyLines: true, // Leere Zeilen überspringen
+                    complete: (results) => {
+                      const dataFromArrayIntoObject = {};
+                      for (let entry of results.data) {
+                        delete entry.accept_offer;
+                        delete entry.external_id;
+                        delete entry.format_quantity;
+                        delete entry.location;
+                        delete entry.quantity;
+                        delete entry.weight;
+                        dataFromArrayIntoObject["" + entry.listing_id] = entry;
+                      }
+                      // Hier wird das geparste CSV gespeichert
+                      if (whichFile === "oldFile") {
+                        mainThis.firstNewDatabase = content;
+                        mainThis.firstFinalBase = dataFromArrayIntoObject;
+                      } else {
+                        mainThis.secondNewDatabase = content;
+                        mainThis.secondFinalBase = dataFromArrayIntoObject;
+                      }
+                      if (whichFile === "newFile") {
+                        mainThis.compareTheFiles();
+                      }
+                    },
+                    error: (error) => {
+                      console.error("Error parsing CSV:", error);
+                    },
+                  });
+                });
+              });
+            })
+            .catch((err) => {
+              console.error("Fehler beim Entpacken der ZIP-Datei:", err);
+            });
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    },
+    storeTheFile(event) {
       if (
         event.target.id === "firstInput" &&
         event.target.files[0].name === this.secondFileName
@@ -233,106 +287,51 @@ export default {
         return;
       }
 
-      const file = event.target.files[0];
-      console.log(file);
-
       if (event.target.id === "firstInput") {
-        mainThis.creationDateOfFirstZipFile =
-          event.target.files[0].lastModified;
+        this.creationDateOfFirstZipFile = event.target.files[0].lastModified;
         if (
-          mainThis.creationDateOfSecondZipFile === 0 ||
-          mainThis.creationDateOfFirstZipFile <
-            mainThis.creationDateOfSecondZipFile
+          this.creationDateOfSecondZipFile === 0 ||
+          this.creationDateOfFirstZipFile < this.creationDateOfSecondZipFile
         ) {
-          mainThis.firstInputElement = event.target;
-          mainThis.firstFileName = event.target.files[0].name;
+          this.firstInputElement = event.target;
+          this.firstFileName = event.target.files[0].name;
+          this.firstZipFile = event.target.files[0];
         } else if (
-          mainThis.creationDateOfFirstZipFile >
-          mainThis.creationDateOfSecondZipFile
-        ) {
-          alert(
-            "Die obere Zip-Datei muss älter sein als die untere! Das Datum findest du im Dateinamen nach 'inventory-'. Bitte füge die obere Datei in das untere Auswahlfeld und die untere Datei in das obere Auswahlfeld ein."
-          );
-          mainThis.creationDateOfFirstZipFile = 0;
-          event.target.value = "";
-          console.log("qqqqqqqqqqqqq");
-          return;
-        }
-      } else {
-        mainThis.creationDateOfSecondZipFile =
-          event.target.files[0].lastModified;
-        if (
-          mainThis.creationDateOfFirstZipFile === 0 ||
-          mainThis.creationDateOfFirstZipFile <
-            mainThis.creationDateOfSecondZipFile
-        ) {
-          mainThis.secondInputElement = event.target;
-          mainThis.secondFileName = event.target.files[0].name;
-        } else if (
-          mainThis.creationDateOfFirstZipFile >
-          mainThis.creationDateOfSecondZipFile
+          this.creationDateOfFirstZipFile > this.creationDateOfSecondZipFile
         ) {
           alert(
             "The upper Zip-file has to be older than the lower one. You can find the creation date in the file-name after 'inventory-'. Please insert the upper file in the lower input-field and the lower file in the upper input-field."
           );
-          mainThis.creationDateOfSecondZipFile = 0;
+          this.creationDateOfFirstZipFile = 0;
+          this.firstZipFile = null;
           event.target.value = "";
-          console.log("qqqqqqqqqqqqq");
+          return;
+        }
+      } else {
+        this.creationDateOfSecondZipFile = event.target.files[0].lastModified;
+        if (
+          this.creationDateOfFirstZipFile === 0 ||
+          this.creationDateOfFirstZipFile < this.creationDateOfSecondZipFile
+        ) {
+          this.secondInputElement = event.target;
+          this.secondFileName = event.target.files[0].name;
+          this.secondZipFile = event.target.files[0];
+        } else if (
+          this.creationDateOfFirstZipFile > this.creationDateOfSecondZipFile
+        ) {
+          alert(
+            "The upper Zip-file has to be older than the lower one. You can find the creation date in the file-name after 'inventory-'. Please insert the upper file in the lower input-field and the lower file in the upper input-field."
+          );
+          this.creationDateOfSecondZipFile = 0;
+          this.secondZipFile = null;
+          event.target.value = "";
           return;
         }
       }
 
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          const arrayBuffer = e.target.result;
-          const jszip = new JSZip();
-          jszip
-            .loadAsync(arrayBuffer)
-            .then((zip) => {
-              zip.forEach((relativePath, file) => {
-                file.async("string").then((content) => {
-                  console.log("Datei:", relativePath);
-                  console.log(typeof content);
-
-                  // Papa Parse zum Verarbeiten des CSV-Inhalts
-                  Papa.parse(content, {
-                    header: true, // Wenn du Kopfzeilen in der CSV hast, kannst du diese Option setzen
-                    skipEmptyLines: true, // Leere Zeilen überspringen
-                    complete: (results) => {
-                      const dataFromArrayIntoObject = {};
-                      for (let entry of results.data) {
-                        delete entry.accept_offer;
-                        delete entry.external_id;
-                        delete entry.format_quantity;
-                        delete entry.location;
-                        delete entry.quantity;
-                        delete entry.weight;
-                        dataFromArrayIntoObject["" + entry.listing_id] = entry;
-                      }
-                      // Hier wird das geparste CSV gespeichert
-                      if (event.target.id === "firstInput") {
-                        mainThis.firstNewDatabase = content;
-                        console.log(results);
-                        mainThis.firstFinalBase = dataFromArrayIntoObject;
-                      } else {
-                        mainThis.secondNewDatabase = content;
-                        console.log(results);
-                        mainThis.secondFinalBase = dataFromArrayIntoObject;
-                      }
-                    },
-                    error: (error) => {
-                      console.error("Error parsing CSV:", error);
-                    },
-                  });
-                });
-              });
-            })
-            .catch((err) => {
-              console.error("Fehler beim Entpacken der ZIP-Datei:", err);
-            });
-        };
-        reader.readAsArrayBuffer(file);
+      if (this.firstZipFile !== null && this.secondZipFile !== null) {
+        this.unpackAndParseTheFile("oldFile");
+        this.unpackAndParseTheFile("newFile");
       }
     },
     clearFile(whichOne) {
@@ -341,6 +340,7 @@ export default {
         this.firstNewDatabase = null;
         this.firstFinalBase = {};
         this.creationDateOfFirstZipFile = 0;
+        this.firstZipFile = null;
 
         if (this.firstInputElement) {
           this.firstInputElement.value = "";
@@ -350,6 +350,7 @@ export default {
         this.secondNewDatabase = null;
         this.secondFinalBase = {};
         this.creationDateOfSecondZipFile = 0;
+        this.secondZipFile = null;
 
         if (this.secondInputElement) {
           this.secondInputElement.value = "";
@@ -357,6 +358,10 @@ export default {
       }
     },
     compareTheFiles() {
+      this.deleteVinyls = [];
+      this.newVinyls = [];
+      this.sameKeys = [];
+      this.changedVinyls = {};
       for (let theKey in this.firstFinalBase) {
         if (this.secondFinalBase.hasOwnProperty(theKey)) {
           this.sameKeys.push(theKey);
@@ -403,6 +408,11 @@ export default {
           this.newVinyls.push(theKey);
         }
       }
+      console.log(this.deleteVinyls.length + " old Vinyls/CDs were deleted");
+      console.log(this.newVinyls.length + " new Vinyls/CDs were added");
+      console.log(
+        Object.keys(this.changedVinyls).length + " Vinyls/CDs were changed"
+      );
     },
   },
   props: {
