@@ -1,128 +1,161 @@
 <template>
-  <h1>{{ msg }}</h1>
-  <div class="input-area">
-    <div class="first-input-area">
-      <label for="firstInput">Lade die <span>ältere</span> Zip-Datei</label>
-      <input
-        id="firstInput"
-        type="file"
-        accept=".zip"
-        @change="storeTheFile($event)"
-      />
+  <div class="main-area">
+    <div
+      class="progess-container"
+      :style="{
+        backgroundColor: progressTextBackgroundColor,
+        display: progressTextDisplay,
+      }"
+    >
+      {{ progressText }}
+      <button
+        type="button"
+        class="progess-close-button"
+        :style="{ display: progressCloseDisplay }"
+        @click="hideProgress()"
+      >
+        X
+      </button>
     </div>
-    <button type="button" @click="clearFile('first')">Delete File 1</button>
-    <div class="thePartition"></div>
-    <div class="second-input-area">
-      <label for="secondInput">Lade die <span>neuere</span> Zip-Datei</label>
-      <input
-        id="secondInput"
-        type="file"
-        accept=".zip"
-        @change="storeTheFile($event)"
-      />
-    </div>
-    <button type="button" @click="clearFile('second')">Delete File 2</button>
-  </div>
-  <!--
-    <p>{{ calculateFirstSizeInMB }}</p>
-    <p>{{ calculateSecondSizeInMB }}</p>  
-  -->
-  <button type="button" @click="compareTheFiles()">Compare the files</button>
+    <header>
+      <h1>{{ msg }}</h1>
+    </header>
+    <main>
+      <div class="input-area">
+        <div class="first-input-area">
+          <label for="firstInput">Lade die <span>ältere</span> Zip-Datei</label>
+          <input
+            id="firstInput"
+            type="file"
+            accept=".zip"
+            @change="storeTheFile($event)"
+          />
+        </div>
+        <button type="button" @click="clearFile('first')">Delete File 1</button>
+        <div class="thePartition"></div>
+        <div class="second-input-area">
+          <label for="secondInput"
+            >Lade die <span>neuere</span> Zip-Datei</label
+          >
+          <input
+            id="secondInput"
+            type="file"
+            accept=".zip"
+            @change="storeTheFile($event)"
+          />
+        </div>
+        <button type="button" @click="clearFile('second')">
+          Delete File 2
+        </button>
+      </div>
+      <!--
+      <p>{{ calculateFirstSizeInMB }}</p>
+      <p>{{ calculateSecondSizeInMB }}</p>  
+    -->
+      <button type="button" @click="compareTheFiles()">
+        Compare the files
+      </button>
 
-  <div>
-    <label for="oldList">Search in old List</label>
-    <input
-      type="text"
-      id="oldList"
-      placeholder="Type in the ID"
-      v-model.trim="searchedIdOld"
-    />
-    <button type="button" @click="searchInNewDatabase('old')">Search</button>
-    <p v-text="returnedOldString"></p>
-  </div>
-  <div>
-    <label for="newList">Search in new List</label>
-    <input
-      type="text"
-      id="newList"
-      placeholder="Type in the ID"
-      v-model.trim="searchedIdNew"
-    />
-    <button type="button" @click="searchInNewDatabase('new')">Search</button>
-    <p v-text="returnedNewString"></p>
-  </div>
+      <div>
+        <label for="oldList">Search in old List</label>
+        <input
+          type="text"
+          id="oldList"
+          placeholder="Type in the ID"
+          v-model.trim="searchedIdOld"
+        />
+        <button type="button" @click="searchInNewDatabase('old')">
+          Search
+        </button>
+        <p v-text="returnedOldString"></p>
+      </div>
+      <div>
+        <label for="newList">Search in new List</label>
+        <input
+          type="text"
+          id="newList"
+          placeholder="Type in the ID"
+          v-model.trim="searchedIdNew"
+        />
+        <button type="button" @click="searchInNewDatabase('new')">
+          Search
+        </button>
+        <p v-text="returnedNewString"></p>
+      </div>
 
-  <h2>First File</h2>
+      <h2>First File</h2>
 
-  <table v-if="Object.keys(firstFinalBase).length !== 0">
-    <tr>
-      <td>listing_id</td>
-      <td>artist</td>
-      <td>title</td>
-      <td>label</td>
-      <td>catno</td>
-      <td>format</td>
-      <td>release_id</td>
-      <td>status</td>
-      <td>price</td>
-      <td>listed</td>
-      <td>comments</td>
-      <td>media_condition</td>
-      <td>sleeve_condition</td>
-    </tr>
-    <tr v-for="(vinyl, id, index) in firstFinalBase" :key="id">
-      <template v-if="index < 10">
-        <td>{{ vinyl.listing_id }}</td>
-        <td>{{ vinyl.artist }}</td>
-        <td>{{ vinyl.title }}</td>
-        <td>{{ vinyl.label }}</td>
-        <td>{{ vinyl.catno }}</td>
-        <td>{{ vinyl.format }}</td>
-        <td>{{ vinyl.release_id }}</td>
-        <td>{{ vinyl.status }}</td>
-        <td>{{ vinyl.price }}</td>
-        <td>{{ vinyl.listed }}</td>
-        <td>{{ vinyl.comments }}</td>
-        <td>{{ vinyl.media_condition }}</td>
-        <td>{{ vinyl.sleeve_condition }}</td>
-      </template>
-    </tr>
-  </table>
-  <h2>Second File</h2>
-  <table v-if="Object.keys(secondFinalBase).length !== 0">
-    <tr>
-      <td>listing_id</td>
-      <td>artist</td>
-      <td>title</td>
-      <td>label</td>
-      <td>catno</td>
-      <td>format</td>
-      <td>release_id</td>
-      <td>status</td>
-      <td>price</td>
-      <td>listed</td>
-      <td>comments</td>
-      <td>media_condition</td>
-      <td>sleeve_condition</td>
-    </tr>
-    <tr v-for="(vinyl, id, index) in secondFinalBase" :key="id">
-      <template v-if="index < 10">
-        <td>{{ vinyl.listing_id }}</td>
-        <td>{{ vinyl.artist }}</td>
-        <td>{{ vinyl.title }}</td>
-        <td>{{ vinyl.label }}</td>
-        <td>{{ vinyl.catno }}</td>
-        <td>{{ vinyl.format }}</td>
-        <td>{{ vinyl.release_id }}</td>
-        <td>{{ vinyl.status }}</td>
-        <td>{{ vinyl.price }}</td>
-        <td>{{ vinyl.listed }}</td>
-        <td>{{ vinyl.comments }}</td>
-        <td>{{ vinyl.media_condition }}</td>
-        <td>{{ vinyl.sleeve_condition }}</td>
-      </template>
-    </tr>
-  </table>
+      <table v-if="Object.keys(firstFinalBase).length !== 0">
+        <tr>
+          <td>listing_id</td>
+          <td>artist</td>
+          <td>title</td>
+          <td>label</td>
+          <td>catno</td>
+          <td>format</td>
+          <td>release_id</td>
+          <td>status</td>
+          <td>price</td>
+          <td>listed</td>
+          <td>comments</td>
+          <td>media_condition</td>
+          <td>sleeve_condition</td>
+        </tr>
+        <tr v-for="(vinyl, id, index) in firstFinalBase" :key="id">
+          <template v-if="index < 10">
+            <td>{{ vinyl.listing_id }}</td>
+            <td>{{ vinyl.artist }}</td>
+            <td>{{ vinyl.title }}</td>
+            <td>{{ vinyl.label }}</td>
+            <td>{{ vinyl.catno }}</td>
+            <td>{{ vinyl.format }}</td>
+            <td>{{ vinyl.release_id }}</td>
+            <td>{{ vinyl.status }}</td>
+            <td>{{ vinyl.price }}</td>
+            <td>{{ vinyl.listed }}</td>
+            <td>{{ vinyl.comments }}</td>
+            <td>{{ vinyl.media_condition }}</td>
+            <td>{{ vinyl.sleeve_condition }}</td>
+          </template>
+        </tr>
+      </table>
+      <h2>Second File</h2>
+      <table v-if="Object.keys(secondFinalBase).length !== 0">
+        <tr>
+          <td>listing_id</td>
+          <td>artist</td>
+          <td>title</td>
+          <td>label</td>
+          <td>catno</td>
+          <td>format</td>
+          <td>release_id</td>
+          <td>status</td>
+          <td>price</td>
+          <td>listed</td>
+          <td>comments</td>
+          <td>media_condition</td>
+          <td>sleeve_condition</td>
+        </tr>
+        <tr v-for="(vinyl, id, index) in secondFinalBase" :key="id">
+          <template v-if="index < 10">
+            <td>{{ vinyl.listing_id }}</td>
+            <td>{{ vinyl.artist }}</td>
+            <td>{{ vinyl.title }}</td>
+            <td>{{ vinyl.label }}</td>
+            <td>{{ vinyl.catno }}</td>
+            <td>{{ vinyl.format }}</td>
+            <td>{{ vinyl.release_id }}</td>
+            <td>{{ vinyl.status }}</td>
+            <td>{{ vinyl.price }}</td>
+            <td>{{ vinyl.listed }}</td>
+            <td>{{ vinyl.comments }}</td>
+            <td>{{ vinyl.media_condition }}</td>
+            <td>{{ vinyl.sleeve_condition }}</td>
+          </template>
+        </tr>
+      </table>
+    </main>
+  </div>
 </template>
 
 <script>
@@ -132,6 +165,10 @@ import Papa from "papaparse";
 export default {
   data() {
     return {
+      progressText: "Please Wait 😉",
+      progressTextDisplay: "none",
+      progressTextBackgroundColor: "lightseagreen",
+      progressCloseDisplay: "none",
       creationDateOfFirstZipFile: 0,
       creationDateOfSecondZipFile: 0,
       firstFileName: "",
@@ -177,6 +214,14 @@ export default {
     },
   },
   methods: {
+    hideProgress() {
+      if (this.progressText === "Done 🤩") {
+        (this.progressTextDisplay = "none"),
+          (this.progressTextBackgroundColor = "lightseagreen"),
+          (this.progressText = "Please Wait 😉");
+        this.progressCloseDisplay = "none";
+      }
+    },
     searchInNewDatabase(whichOne) {
       if (whichOne === "old") {
         const indexOfSearchedID = this.firstNewDatabase.indexOf(
@@ -330,6 +375,7 @@ export default {
       }
 
       if (this.firstZipFile !== null && this.secondZipFile !== null) {
+        this.progressTextDisplay = "block";
         this.unpackAndParseTheFile("oldFile");
         this.unpackAndParseTheFile("newFile");
       }
@@ -413,6 +459,9 @@ export default {
       console.log(
         Object.keys(this.changedVinyls).length + " Vinyls/CDs were changed"
       );
+      this.progressTextBackgroundColor = "lightsalmon";
+      this.progressText = "Done 🤩";
+      this.progressCloseDisplay = "block";
     },
   },
   props: {
@@ -424,6 +473,30 @@ export default {
 <style scoped>
 div {
   margin-top: 5rem;
+}
+
+.progess-container {
+  border: 0.25rem solid black;
+  width: fit-content;
+  font-size: 5rem;
+  padding: 5rem;
+  position: absolute;
+  left: 30%;
+  top: 10rem;
+}
+
+.progess-close-button {
+  all: unset;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 0.15rem solid black;
+  border-radius: 50%;
+  width: 1.5rem;
+  padding: 0.5rem;
+  background-color: lightgray;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
 }
 
 .input-area,
