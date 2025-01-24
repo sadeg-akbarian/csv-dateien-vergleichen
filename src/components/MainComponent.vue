@@ -1,149 +1,185 @@
 <template>
-  <h1>{{ msg }}</h1>
-  <div class="input-area">
-    <div class="first-input-area">
-      <label for="firstInput">Lade die <span>ältere</span> Zip-Datei</label>
-      <input
-        id="firstInput"
-        type="file"
-        accept=".zip"
-        @change="loadTheFile($event)"
-      />
+  <div class="main-area">
+    <div
+      v-show="progressTextDisplay"
+      class="progess-container"
+      :style="{
+        backgroundColor: progressTextBackgroundColor,
+      }"
+    >
+      {{ progressText }}
+      <button
+        type="button"
+        class="progess-close-button"
+        :style="{ display: progressCloseDisplay }"
+        @click="hideProgress()"
+      >
+        X
+      </button>
     </div>
-    <button type="button" @click="clearFile('first')">Delete File 1</button>
-    <div class="thePartition"></div>
-    <div class="second-input-area">
-      <label for="secondInput">Lade die <span>neuere</span> Zip-Datei</label>
-      <input
-        id="secondInput"
-        type="file"
-        accept=".zip"
-        @change="loadTheFile($event)"
-      />
-    </div>
-    <button type="button" @click="clearFile('second')">Delete File 2</button>
-  </div>
-  <!--
-    <p>{{ calculateFirstSizeInMB }}</p>
-    <p>{{ calculateSecondSizeInMB }}</p>  
-  -->
-  <button type="button" @click="compareTheFiles()">Compare the files</button>
+    <header>
+      <h1>{{ msg }}</h1>
+    </header>
+    <main>
+      <div class="input-area">
+        <div class="first-input-area">
+          <label for="firstInput">Lade die <span>ältere</span> Zip-Datei</label>
+          <input
+            id="firstInput"
+            type="file"
+            accept=".zip"
+            @change="storeTheFile($event)"
+          />
+        </div>
+        <button type="button" @click="clearFile('first')">Delete File 1</button>
+        <div class="thePartition"></div>
+        <div class="second-input-area">
+          <label for="secondInput"
+            >Lade die <span>neuere</span> Zip-Datei</label
+          >
+          <input
+            id="secondInput"
+            type="file"
+            accept=".zip"
+            @change="storeTheFile($event)"
+          />
+        </div>
+        <button type="button" @click="clearFile('second')">
+          Delete File 2
+        </button>
+      </div>
+      <!--
+      <p>{{ calculateFirstSizeInMB }}</p>
+      <p>{{ calculateSecondSizeInMB }}</p>  
+    -->
+      <button type="button" @click="compareTheFiles()">
+        Compare the files
+      </button>
 
-  <div>
-    <label for="oldList">Search in old List</label>
-    <input
-      type="text"
-      id="oldList"
-      placeholder="Type in the ID"
-      v-model.trim="searchedIdOld"
-    />
-    <button type="button" @click="searchInOld('old')">Search</button>
-    <p v-text="returnedOldString"></p>
-  </div>
-  <div>
-    <label for="newList">Search in new List</label>
-    <input
-      type="text"
-      id="newList"
-      placeholder="Type in the ID"
-      v-model.trim="searchedIdNew"
-    />
-    <button type="button" @click="searchInOld('new')">Search</button>
-    <p v-text="returnedNewString"></p>
-  </div>
+      <div>
+        <label for="oldList">Search in old List</label>
+        <input
+          type="text"
+          id="oldList"
+          placeholder="Type in the ID"
+          v-model.trim="searchedIdOld"
+        />
+        <button type="button" @click="searchInNewDatabase('old')">
+          Search
+        </button>
+        <p v-text="returnedOldString"></p>
+      </div>
+      <div>
+        <label for="newList">Search in new List</label>
+        <input
+          type="text"
+          id="newList"
+          placeholder="Type in the ID"
+          v-model.trim="searchedIdNew"
+        />
+        <button type="button" @click="searchInNewDatabase('new')">
+          Search
+        </button>
+        <p v-text="returnedNewString"></p>
+      </div>
 
-  <h2>First File</h2>
+      <h2>First File</h2>
 
-  <table v-if="Object.keys(firstFinalBase).length > 10">
-    <tr>
-      <td>listing_id</td>
-      <td>artist</td>
-      <td>title</td>
-      <td>label</td>
-      <td>catno</td>
-      <td>format</td>
-      <td>release_id</td>
-      <td>status</td>
-      <td>price</td>
-      <td>listed</td>
-      <td>comments</td>
-      <td>media_condition</td>
-      <td>sleeve_condition</td>
-    </tr>
-    <tr v-for="(vinyl, id, index) in firstFinalBase" :key="id">
-      <template v-if="index < 10">
-        <td>{{ vinyl.listing_id }}</td>
-        <td>{{ vinyl.artist }}</td>
-        <td>{{ vinyl.title }}</td>
-        <td>{{ vinyl.label }}</td>
-        <td>{{ vinyl.catno }}</td>
-        <td>{{ vinyl.format }}</td>
-        <td>{{ vinyl.release_id }}</td>
-        <td>{{ vinyl.status }}</td>
-        <td>{{ vinyl.price }}</td>
-        <td>{{ vinyl.listed }}</td>
-        <td>{{ vinyl.comments }}</td>
-        <td>{{ vinyl.media_condition }}</td>
-        <td>{{ vinyl.sleeve_condition }}</td>
-      </template>
-    </tr>
-  </table>
-  <h2>Second File</h2>
-  <table v-if="Object.keys(secondFinalBase).length > 10">
-    <tr>
-      <td>listing_id</td>
-      <td>artist</td>
-      <td>title</td>
-      <td>label</td>
-      <td>catno</td>
-      <td>format</td>
-      <td>release_id</td>
-      <td>status</td>
-      <td>price</td>
-      <td>listed</td>
-      <td>comments</td>
-      <td>media_condition</td>
-      <td>sleeve_condition</td>
-    </tr>
-    <tr v-for="(vinyl, id, index) in secondFinalBase" :key="id">
-      <template v-if="index < 10">
-        <td>{{ vinyl.listing_id }}</td>
-        <td>{{ vinyl.artist }}</td>
-        <td>{{ vinyl.title }}</td>
-        <td>{{ vinyl.label }}</td>
-        <td>{{ vinyl.catno }}</td>
-        <td>{{ vinyl.format }}</td>
-        <td>{{ vinyl.release_id }}</td>
-        <td>{{ vinyl.status }}</td>
-        <td>{{ vinyl.price }}</td>
-        <td>{{ vinyl.listed }}</td>
-        <td>{{ vinyl.comments }}</td>
-        <td>{{ vinyl.media_condition }}</td>
-        <td>{{ vinyl.sleeve_condition }}</td>
-      </template>
-    </tr>
-  </table>
+      <table v-if="Object.keys(firstFinalBase).length !== 0">
+        <tr>
+          <td>listing_id</td>
+          <td>artist</td>
+          <td>title</td>
+          <td>label</td>
+          <td>catno</td>
+          <td>format</td>
+          <td>release_id</td>
+          <td>status</td>
+          <td>price</td>
+          <td>listed</td>
+          <td>comments</td>
+          <td>media_condition</td>
+          <td>sleeve_condition</td>
+        </tr>
+        <tr v-for="(vinyl, id, index) in firstFinalBase" :key="id">
+          <template v-if="index < 10">
+            <td>{{ vinyl.listing_id }}</td>
+            <td>{{ vinyl.artist }}</td>
+            <td>{{ vinyl.title }}</td>
+            <td>{{ vinyl.label }}</td>
+            <td>{{ vinyl.catno }}</td>
+            <td>{{ vinyl.format }}</td>
+            <td>{{ vinyl.release_id }}</td>
+            <td>{{ vinyl.status }}</td>
+            <td>{{ vinyl.price }}</td>
+            <td>{{ vinyl.listed }}</td>
+            <td>{{ vinyl.comments }}</td>
+            <td>{{ vinyl.media_condition }}</td>
+            <td>{{ vinyl.sleeve_condition }}</td>
+          </template>
+        </tr>
+      </table>
+      <h2>Second File</h2>
+      <table v-if="Object.keys(secondFinalBase).length !== 0">
+        <tr>
+          <td>listing_id</td>
+          <td>artist</td>
+          <td>title</td>
+          <td>label</td>
+          <td>catno</td>
+          <td>format</td>
+          <td>release_id</td>
+          <td>status</td>
+          <td>price</td>
+          <td>listed</td>
+          <td>comments</td>
+          <td>media_condition</td>
+          <td>sleeve_condition</td>
+        </tr>
+        <tr v-for="(vinyl, id, index) in secondFinalBase" :key="id">
+          <template v-if="index < 10">
+            <td>{{ vinyl.listing_id }}</td>
+            <td>{{ vinyl.artist }}</td>
+            <td>{{ vinyl.title }}</td>
+            <td>{{ vinyl.label }}</td>
+            <td>{{ vinyl.catno }}</td>
+            <td>{{ vinyl.format }}</td>
+            <td>{{ vinyl.release_id }}</td>
+            <td>{{ vinyl.status }}</td>
+            <td>{{ vinyl.price }}</td>
+            <td>{{ vinyl.listed }}</td>
+            <td>{{ vinyl.comments }}</td>
+            <td>{{ vinyl.media_condition }}</td>
+            <td>{{ vinyl.sleeve_condition }}</td>
+          </template>
+        </tr>
+      </table>
+    </main>
+  </div>
 </template>
 
 <script>
 import JSZip from "jszip";
+import Papa from "papaparse";
 
 export default {
   data() {
     return {
-      oldWeirdVinylsTypeA: {},
-      newWeirdVinylsTypeA: {},
-      oldWeirdVinylsTypeB: {},
-      newWeirdVinylsTypeB: {},
+      progressText: "Please Wait 😉",
+      progressTextDisplay: false,
+      progressTextBackgroundColor: "lightseagreen",
+      progressCloseDisplay: "none",
       creationDateOfFirstZipFile: 0,
       creationDateOfSecondZipFile: 0,
       firstFileName: "",
       firstInputElement: null,
+      firstZipFile: null,
+      secondZipFile: null,
       secondFileName: "",
       secondInputElement: null,
-      firstNewDatabase: null,
+      firstNewDatabase: "",
       firstFinalBase: {},
-      secondNewDatabase: null,
+      secondNewDatabase: "",
       secondFinalBase: {},
       deleteVinyls: [],
       sameKeys: [],
@@ -178,34 +214,104 @@ export default {
     },
   },
   methods: {
-    searchInOld(whichOne) {
-      if (whichOne === "old") {
-        if (this.searchedIdOld.length < 9) {
-          alert("The ID has to have at least 9 figures!!!");
-        } else {
-          for (let entry in this.firstNewDatabase) {
-            if (this.searchedIdOld === entry) {
-              this.returnedOldString =
-                entry + ", " + this.firstNewDatabase[entry];
-            }
-          }
-        }
-      } else {
-        if (this.searchedIdNew.length < 9) {
-          alert("The ID has to have at least 9 figures!!!");
-        } else {
-          for (let entry in this.secondNewDatabase) {
-            if (this.searchedIdNew === entry) {
-              this.returnedNewString =
-                entry + ", " + this.secondNewDatabase[entry];
-            }
-          }
-        }
+    hideProgress() {
+      if (this.progressText === "Done 🤩") {
+        (this.progressTextDisplay = false),
+          (this.progressTextBackgroundColor = "lightseagreen"),
+          (this.progressText = "Please Wait 😉");
+        this.progressCloseDisplay = "none";
       }
     },
-    loadTheFile(event) {
+    searchInNewDatabase(whichOne) {
+      if (whichOne === "old") {
+        const indexOfSearchedID = this.firstNewDatabase.indexOf(
+          this.searchedIdOld
+        );
+        const indexOfEndOfVinylData = this.firstNewDatabase.indexOf(
+          "\n",
+          indexOfSearchedID
+        );
+        const wantedData = this.firstNewDatabase.substring(
+          indexOfSearchedID,
+          indexOfEndOfVinylData
+        );
+        this.returnedOldString = wantedData;
+      } else {
+        const indexOfSearchedID = this.secondNewDatabase.indexOf(
+          this.searchedIdNew
+        );
+        const indexOfEndOfVinylData = this.secondNewDatabase.indexOf(
+          "\n",
+          indexOfSearchedID
+        );
+        const wantedData = this.secondNewDatabase.substring(
+          indexOfSearchedID,
+          indexOfEndOfVinylData
+        );
+        this.returnedNewString = wantedData;
+      }
+    },
+    unpackAndParseTheFile(whichFile) {
       const mainThis = this;
+      let file;
+      if (whichFile === "oldFile") {
+        file = this.firstZipFile;
+      } else {
+        file = this.secondZipFile;
+      }
 
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const arrayBuffer = e.target.result;
+          const jszip = new JSZip();
+          jszip
+            .loadAsync(arrayBuffer)
+            .then((zip) => {
+              zip.forEach((relativePath, file) => {
+                file.async("string").then((content) => {
+                  // Papa Parse zum Verarbeiten des CSV-Inhalts
+                  Papa.parse(content, {
+                    header: true, // Wenn du Kopfzeilen in der CSV hast, kannst du diese Option setzen
+                    skipEmptyLines: true, // Leere Zeilen überspringen
+                    complete: (results) => {
+                      const dataFromArrayIntoObject = {};
+                      for (let entry of results.data) {
+                        delete entry.accept_offer;
+                        delete entry.external_id;
+                        delete entry.format_quantity;
+                        delete entry.location;
+                        delete entry.quantity;
+                        delete entry.weight;
+                        dataFromArrayIntoObject["" + entry.listing_id] = entry;
+                      }
+                      // Hier wird das geparste CSV gespeichert
+                      if (whichFile === "oldFile") {
+                        mainThis.firstNewDatabase = content;
+                        mainThis.firstFinalBase = dataFromArrayIntoObject;
+                      } else {
+                        mainThis.secondNewDatabase = content;
+                        mainThis.secondFinalBase = dataFromArrayIntoObject;
+                      }
+                      if (whichFile === "newFile") {
+                        mainThis.compareTheFiles();
+                      }
+                    },
+                    error: (error) => {
+                      console.error("Error parsing CSV:", error);
+                    },
+                  });
+                });
+              });
+            })
+            .catch((err) => {
+              console.error("Fehler beim Entpacken der ZIP-Datei:", err);
+            });
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    },
+    storeTheFile(event) {
       if (
         event.target.id === "firstInput" &&
         event.target.files[0].name === this.secondFileName
@@ -226,181 +332,52 @@ export default {
         return;
       }
 
-      const file = event.target.files[0];
-      console.log(file);
-
       if (event.target.id === "firstInput") {
-        mainThis.creationDateOfFirstZipFile =
-          event.target.files[0].lastModified;
+        this.creationDateOfFirstZipFile = event.target.files[0].lastModified;
         if (
-          mainThis.creationDateOfSecondZipFile === 0 ||
-          mainThis.creationDateOfFirstZipFile <
-            mainThis.creationDateOfSecondZipFile
+          this.creationDateOfSecondZipFile === 0 ||
+          this.creationDateOfFirstZipFile < this.creationDateOfSecondZipFile
         ) {
-          mainThis.firstInputElement = event.target;
-          mainThis.firstFileName = event.target.files[0].name;
+          this.firstInputElement = event.target;
+          this.firstFileName = event.target.files[0].name;
+          this.firstZipFile = event.target.files[0];
         } else if (
-          mainThis.creationDateOfFirstZipFile >
-          mainThis.creationDateOfSecondZipFile
-        ) {
-          alert(
-            "Die obere Zip-Datei muss älter sein als die untere! Das Datum findest du im Dateinamen nach 'inventory-'. Bitte füge die obere Datei in das untere Auswahlfeld und die untere Datei in das obere Auswahlfeld ein."
-          );
-          mainThis.creationDateOfFirstZipFile = 0;
-          event.target.value = "";
-          console.log("qqqqqqqqqqqqq");
-          return;
-        }
-      } else {
-        mainThis.creationDateOfSecondZipFile =
-          event.target.files[0].lastModified;
-        if (
-          mainThis.creationDateOfFirstZipFile === 0 ||
-          mainThis.creationDateOfFirstZipFile <
-            mainThis.creationDateOfSecondZipFile
-        ) {
-          mainThis.secondInputElement = event.target;
-          mainThis.secondFileName = event.target.files[0].name;
-        } else if (
-          mainThis.creationDateOfFirstZipFile >
-          mainThis.creationDateOfSecondZipFile
+          this.creationDateOfFirstZipFile > this.creationDateOfSecondZipFile
         ) {
           alert(
             "The upper Zip-file has to be older than the lower one. You can find the creation date in the file-name after 'inventory-'. Please insert the upper file in the lower input-field and the lower file in the upper input-field."
           );
-          mainThis.creationDateOfSecondZipFile = 0;
+          this.creationDateOfFirstZipFile = 0;
+          this.firstZipFile = null;
           event.target.value = "";
-          console.log("qqqqqqqqqqqqq");
+          return;
+        }
+      } else {
+        this.creationDateOfSecondZipFile = event.target.files[0].lastModified;
+        if (
+          this.creationDateOfFirstZipFile === 0 ||
+          this.creationDateOfFirstZipFile < this.creationDateOfSecondZipFile
+        ) {
+          this.secondInputElement = event.target;
+          this.secondFileName = event.target.files[0].name;
+          this.secondZipFile = event.target.files[0];
+        } else if (
+          this.creationDateOfFirstZipFile > this.creationDateOfSecondZipFile
+        ) {
+          alert(
+            "The upper Zip-file has to be older than the lower one. You can find the creation date in the file-name after 'inventory-'. Please insert the upper file in the lower input-field and the lower file in the upper input-field."
+          );
+          this.creationDateOfSecondZipFile = 0;
+          this.secondZipFile = null;
+          event.target.value = "";
           return;
         }
       }
 
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          const arrayBuffer = e.target.result;
-          const jszip = new JSZip();
-          jszip
-            .loadAsync(arrayBuffer)
-            .then((zip) => {
-              zip.forEach((relativePath, file) => {
-                file.async("string").then((content) => {
-                  console.log("Datei:", relativePath);
-                  console.log(typeof content);
-                  const regex = /(\d{9,}),/g;
-
-                  const helpingArray = content.split(regex);
-                  const objectForNewDatabase = {
-                    headline: helpingArray[0],
-                  };
-                  for (let i = 1; i < helpingArray.length; i += 2) {
-                    objectForNewDatabase["" + helpingArray[i]] =
-                      helpingArray[i + 1];
-                  }
-
-                  let whichNewDataBase;
-                  if (event.target.id === "firstInput") {
-                    mainThis.firstNewDatabase = objectForNewDatabase;
-                    whichNewDataBase = mainThis.firstNewDatabase;
-                  } else {
-                    mainThis.secondNewDatabase = objectForNewDatabase;
-                    whichNewDataBase = mainThis.secondNewDatabase;
-                  }
-
-                  for (let platte in whichNewDataBase) {
-                    // Split-Kommas, die nicht innerhalb von Anführungszeichen liegen
-                    const result = whichNewDataBase[platte].match(
-                      /(".*?"|[^",]+)(?=\s*,|\s*$)/g
-                    );
-
-                    if (result) {
-                      // Entferne die umschließenden Anführungszeichen aus den Ergebnissen
-                      const cleanedResult = result.map((item) =>
-                        item.trim().replace(/^"(.*)"$/, "$1")
-                      );
-
-                      const shortenedCleanedResult = cleanedResult.slice(0, 12);
-
-                      const newVinylObject = {
-                        listing_id: platte,
-                        artist: shortenedCleanedResult[0],
-                        title: shortenedCleanedResult[1],
-                        label: shortenedCleanedResult[2],
-                        catno: shortenedCleanedResult[3],
-                        format: shortenedCleanedResult[4],
-                        release_id: shortenedCleanedResult[5],
-                        status: shortenedCleanedResult[6],
-                        price: shortenedCleanedResult[7],
-                        listed: shortenedCleanedResult[8],
-                        comments: shortenedCleanedResult[9],
-                        media_condition: shortenedCleanedResult[10],
-                        sleeve_condition: shortenedCleanedResult[11],
-                      };
-
-                      if (newVinylObject.status === undefined) {
-                        newVinylObject.originalString =
-                          whichNewDataBase[platte];
-                        if (event.target.id === "firstInput") {
-                          mainThis.oldWeirdVinylsTypeA["" + platte] =
-                            newVinylObject;
-                        } else {
-                          mainThis.newWeirdVinylsTypeA["" + platte] =
-                            newVinylObject;
-                        }
-                      } else if (newVinylObject.status.length > 15) {
-                        newVinylObject.originalString =
-                          whichNewDataBase[platte];
-                        if (event.target.id === "firstInput") {
-                          mainThis.oldWeirdVinylsTypeB["" + platte] =
-                            newVinylObject;
-                        } else {
-                          mainThis.newWeirdVinylsTypeB["" + platte] =
-                            newVinylObject;
-                        }
-                      } else {
-                        if (event.target.id === "firstInput") {
-                          mainThis.firstFinalBase["" + platte] = newVinylObject;
-                        } else {
-                          mainThis.secondFinalBase["" + platte] =
-                            newVinylObject;
-                        }
-                      }
-                    } else {
-                      console.error("No match found for:", platte);
-                    }
-                  }
-                  const howManyOldWeirdVinylsTypeA = Object.keys(
-                    mainThis.oldWeirdVinylsTypeA
-                  ).length;
-                  const howManyNewWeirdVinylsTypeA = Object.keys(
-                    mainThis.newWeirdVinylsTypeA
-                  ).length;
-                  console.log(
-                    howManyOldWeirdVinylsTypeA + " old weird Vinyls Type A"
-                  );
-                  console.log(
-                    howManyNewWeirdVinylsTypeA + " new weird Vinyls Type A"
-                  );
-                  const howManyOldWeirdVinylsTypeB = Object.keys(
-                    mainThis.oldWeirdVinylsTypeB
-                  ).length;
-                  const howManyNewWeirdVinylsTypeB = Object.keys(
-                    mainThis.newWeirdVinylsTypeB
-                  ).length;
-                  console.log(
-                    howManyOldWeirdVinylsTypeB + " old weird Vinyls Type B"
-                  );
-                  console.log(
-                    howManyNewWeirdVinylsTypeB + " new weird Vinyls Type B"
-                  );
-                });
-              });
-            })
-            .catch((err) => {
-              console.error("Fehler beim Entpacken der ZIP-Datei:", err);
-            });
-        };
-        reader.readAsArrayBuffer(file);
+      if (this.firstZipFile !== null && this.secondZipFile !== null) {
+        this.progressTextDisplay = true;
+        this.unpackAndParseTheFile("oldFile");
+        this.unpackAndParseTheFile("newFile");
       }
     },
     clearFile(whichOne) {
@@ -409,6 +386,7 @@ export default {
         this.firstNewDatabase = null;
         this.firstFinalBase = {};
         this.creationDateOfFirstZipFile = 0;
+        this.firstZipFile = null;
 
         if (this.firstInputElement) {
           this.firstInputElement.value = "";
@@ -418,6 +396,7 @@ export default {
         this.secondNewDatabase = null;
         this.secondFinalBase = {};
         this.creationDateOfSecondZipFile = 0;
+        this.secondZipFile = null;
 
         if (this.secondInputElement) {
           this.secondInputElement.value = "";
@@ -425,6 +404,10 @@ export default {
       }
     },
     compareTheFiles() {
+      this.deleteVinyls = [];
+      this.newVinyls = [];
+      this.sameKeys = [];
+      this.changedVinyls = {};
       for (let theKey in this.firstFinalBase) {
         if (this.secondFinalBase.hasOwnProperty(theKey)) {
           this.sameKeys.push(theKey);
@@ -432,74 +415,53 @@ export default {
           this.deleteVinyls.push(theKey);
         }
       }
-      console.log(this.deleteVinyls.length);
-      console.log(this.sameKeys.length);
-      // console.log(this.sameKeys);
       for (let theKey in this.secondFinalBase) {
         if (!this.firstFinalBase.hasOwnProperty(theKey)) {
           this.newVinyls.push(theKey);
         }
       }
-      console.log(this.newVinyls.length);
       for (let theKey of this.sameKeys) {
-        const vinylInOldList = Object.values(this.firstFinalBase["" + theKey]);
-        const vinylInNewList = Object.values(this.secondFinalBase["" + theKey]);
-        for (let i = 0; i < 13; i++) {
-          if (vinylInOldList[i] !== vinylInNewList[i]) {
-            let majorPriceDifference = false;
-            if (i === 7) {
-              console.log(theKey);
-              console.log(vinylInOldList);
-              console.log(vinylInNewList);
-              console.log(vinylInOldList[i]);
-              console.log(vinylInNewList[i]);
-            }
-            if (i === 8) {
-              // console.log("Preis");
-              const oldPriceInNumber = Number(vinylInOldList[8]);
-              const newPriceInNumber = Number(vinylInNewList[8]);
-              // console.log(oldPriceInNumber);
-              // console.log(newPriceInNumber);
-              const priceDiffenrence = Math.abs(
-                oldPriceInNumber - newPriceInNumber
-              );
-              // console.log(priceDiffenrence);
-              if (priceDiffenrence >= 0.11) {
-                majorPriceDifference = true;
-              }
-              // 899534124
-            }
-            // if (i === 10) {
-            //   console.log("Comments");
-            // }
-            // if (i === 11) {
-            //   console.log("media_condition");
-            // }
-            // if (i === 12) {
-            //   console.log("sleeve_condition");
-            // }
-            if (
-              (i === 8 && majorPriceDifference === true) ||
-              i === 10 ||
-              i === 11 ||
-              i === 12
-            ) {
-              // console.log(theKey);
-              // console.log(this.secondFinalBase["" + theKey]);
-              // console.log(vinylInNewList);
-              // console.log(vinylInOldList[i]);
-              // console.log(vinylInNewList[i]);
-              // const newObject = {
-              //   listing_id:
-              // }
-              this.changedVinyls["" + theKey] =
-                this.secondFinalBase["" + theKey];
-            }
-            // console.log("---------------------------------------");
+        const vinylInOldList = this.firstFinalBase["" + theKey];
+        const vinylInNewList = this.secondFinalBase["" + theKey];
+        let majorPriceDifference = false;
+        if (vinylInOldList.price !== vinylInNewList.price) {
+          const oldPrice = Number(vinylInOldList.price);
+          const newPrice = Number(vinylInNewList.price);
+          const priceDifference = Math.abs(oldPrice - newPrice);
+          if (priceDifference >= 0.11) {
+            majorPriceDifference = true;
           }
         }
+        if (
+          (vinylInOldList.media_condition !== vinylInNewList.media_condition ||
+            vinylInOldList.sleeve_condition !==
+              vinylInNewList.sleeve_condition ||
+            vinylInOldList.comments !== vinylInNewList.comments ||
+            majorPriceDifference === true) &&
+          vinylInOldList.status === vinylInNewList.status
+        ) {
+          this.changedVinyls["" + theKey] = vinylInNewList;
+        } else if (
+          vinylInOldList.status === "For Sale" &&
+          vinylInNewList.status === "Sold"
+        ) {
+          this.deleteVinyls.push(theKey);
+        } else if (
+          vinylInOldList.status === "Sold" &&
+          vinylInNewList.status === "For Sale"
+        ) {
+          this.deleteVinyls.push(theKey);
+          this.newVinyls.push(theKey);
+        }
       }
-      console.log(Object.keys(this.changedVinyls).length);
+      console.log(this.deleteVinyls.length + " old Vinyls/CDs were deleted");
+      console.log(this.newVinyls.length + " new Vinyls/CDs were added");
+      console.log(
+        Object.keys(this.changedVinyls).length + " Vinyls/CDs were changed"
+      );
+      this.progressTextBackgroundColor = "lightsalmon";
+      this.progressText = "Done 🤩";
+      this.progressCloseDisplay = "block";
     },
   },
   props: {
@@ -511,6 +473,30 @@ export default {
 <style scoped>
 div {
   margin-top: 5rem;
+}
+
+.progess-container {
+  border: 0.25rem solid black;
+  width: fit-content;
+  font-size: 5rem;
+  padding: 5rem;
+  position: absolute;
+  left: 30%;
+  top: 10rem;
+}
+
+.progess-close-button {
+  all: unset;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 0.15rem solid black;
+  border-radius: 50%;
+  width: 1.5rem;
+  padding: 0.5rem;
+  background-color: lightgray;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
 }
 
 .input-area,
