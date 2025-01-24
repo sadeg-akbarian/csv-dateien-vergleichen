@@ -1,10 +1,10 @@
 <template>
   <div class="main-area">
     <div
+      v-show="progressTextDisplay"
       class="progess-container"
       :style="{
         backgroundColor: progressTextBackgroundColor,
-        display: progressTextDisplay,
       }"
     >
       {{ progressText }}
@@ -166,7 +166,7 @@ export default {
   data() {
     return {
       progressText: "Please Wait 😉",
-      progressTextDisplay: "none",
+      progressTextDisplay: false,
       progressTextBackgroundColor: "lightseagreen",
       progressCloseDisplay: "none",
       creationDateOfFirstZipFile: 0,
@@ -216,7 +216,7 @@ export default {
   methods: {
     hideProgress() {
       if (this.progressText === "Done 🤩") {
-        (this.progressTextDisplay = "none"),
+        (this.progressTextDisplay = false),
           (this.progressTextBackgroundColor = "lightseagreen"),
           (this.progressText = "Please Wait 😉");
         this.progressCloseDisplay = "none";
@@ -375,7 +375,7 @@ export default {
       }
 
       if (this.firstZipFile !== null && this.secondZipFile !== null) {
-        this.progressTextDisplay = "block";
+        this.progressTextDisplay = true;
         this.unpackAndParseTheFile("oldFile");
         this.unpackAndParseTheFile("newFile");
       }
